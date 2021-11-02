@@ -1,5 +1,12 @@
 data "tfe_ip_ranges" "tf_cloud_ips" {}
 
+locals {
+  tf_cloud_ips = [
+    for ip in data.tfe_ip_ranges.tf_cloud_ips.api :
+    replace(ip, "/32", "")
+  ]
+}
+
 resource "azurerm_storage_account" "static" {
   name                = "stor${replace(var.project, "-", "")}"
   resource_group_name = azurerm_resource_group.rg.name
@@ -16,7 +23,7 @@ resource "azurerm_storage_account" "static" {
 
   network_rules {
     virtual_network_subnet_ids = [azurerm_subnet.appgw.id]
-    ip_rules                   = setunion(var.whitelisted_ips, data.tfe_ip_ranges.tf_cloud_ips.api)
+    ip_rules                   = setunion(var.whitelisted_ips, local.tf_cloud_ips)
     default_action             = "Deny"
   }
 }
