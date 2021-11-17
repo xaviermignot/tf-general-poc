@@ -31,10 +31,10 @@ resource "azurerm_application_gateway" "app_gw" {
   }
 
   http_listener {
-    name                           = "appgw-https-listener"
+    name                           = "appgw-https-storage-listener"
     frontend_ip_configuration_name = "appgw-frontend-ip-configuration"
     frontend_port_name             = "appgw-frontend-port-https"
-    host_name                      = var.custom_domain_name
+    host_name                      = var.storage_custom_domain
     ssl_certificate_name           = "appgw-ssl-certificate"
     protocol                       = "Https"
   }
@@ -45,7 +45,7 @@ resource "azurerm_application_gateway" "app_gw" {
   }
 
   backend_http_settings {
-    name                  = "appgw-backend-http-settings"
+    name                  = "appgw-backend-http-settings-storage"
     cookie_based_affinity = "Disabled"
     protocol              = "Http"
     port                  = 80
@@ -67,42 +67,51 @@ resource "azurerm_application_gateway" "app_gw" {
   request_routing_rule {
     name                       = "appgw-routing-rule-https"
     rule_type                  = "Basic"
-    http_listener_name         = "appgw-https-listener"
+    http_listener_name         = "appgw-https-storage-listener"
     backend_address_pool_name  = "appgw-backend-address-pool-storage"
-    backend_http_settings_name = "appgw-backend-http-settings"
+    backend_http_settings_name = "appgw-backend-http-settings-storage"
   }
 
-  # backend_address_pool {
-  #   name  = "appgw-backend-address-pool-app-service"
-  #   fqdns = [azurerm_app_service.app.default_site_hostname]
-  # }
+  http_listener {
+    name                           = "appgw-https-app-service-listener"
+    frontend_ip_configuration_name = "appgw-frontend-ip-configuration"
+    frontend_port_name             = "appgw-frontend-port-https"
+    host_name                      = var.app_service_custom_domain
+    ssl_certificate_name           = "appgw-ssl-certificate"
+    protocol                       = "Https"
+  }
 
-  # probe {
-  #   name                = "appgw-probe-app-service"
-  #   protocol            = "Https"
-  #   path                = "/"
-  #   host                = azurerm_app_service.app.default_site_hostname
-  #   interval            = 10
-  #   timeout             = 30
-  #   unhealthy_threshold = 3
-  # }
+  backend_address_pool {
+    name  = "appgw-backend-address-pool-app-service"
+    fqdns = [azurerm_app_service.app.default_site_hostname]
+  }
 
-  # backend_http_settings {
-  #   name                  = "appgw-backend-http-settings-app-service"
-  #   cookie_based_affinity = "Disabled"
-  #   path                  = "/aps/"
-  #   protocol              = "Https"
-  #   port                  = 443
-  #   probe_name            = "appgw-probe-app-service"
-  #   request_timeout       = 30
-  #   host_name             = azurerm_storage_account.account.primary_web_host
-  # }
+  probe {
+    name                = "appgw-probe-app-service"
+    protocol            = "Https"
+    path                = "/"
+    host                = azurerm_app_service.app.default_site_hostname
+    interval            = 10
+    timeout             = 30
+    unhealthy_threshold = 3
+  }
 
-  # request_routing_rule {
-  #   name                       = "appgw-routing-rule-https-app-service"
-  #   rule_type                  = "Basic"
-  #   http_listener_name         = "appgw-https-listener"
-  #   backend_address_pool_name  = "appgw-backend-address-pool-app-service"
-  #   backend_http_settings_name = "appgw-backend-http-settings-app-service"    
-  # }
+  backend_http_settings {
+    name                  = "appgw-backend-http-settings-app-service"
+    cookie_based_affinity = "Disabled"
+    path                  = "/"
+    protocol              = "Https"
+    port                  = 443
+    probe_name            = "appgw-probe-app-service"
+    request_timeout       = 30
+    host_name             = azurerm_app_service.app.default_site_hostname
+  }
+
+  request_routing_rule {
+    name                       = "appgw-routing-rule-https-app-service"
+    rule_type                  = "Basic"
+    http_listener_name         = "appgw-https-app-service-listener"
+    backend_address_pool_name  = "appgw-backend-address-pool-app-service"
+    backend_http_settings_name = "appgw-backend-http-settings-app-service"    
+  }
 }
