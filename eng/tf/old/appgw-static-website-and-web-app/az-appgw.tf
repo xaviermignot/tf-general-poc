@@ -112,6 +112,6 @@ resource "azurerm_application_gateway" "app_gw" {
     rule_type                  = "Basic"
     http_listener_name         = "appgw-https-app-service-listener"
     backend_address_pool_name  = "appgw-backend-address-pool-app-service"
-    backend_http_settings_name = "appgw-backend-http-settings-app-service"    
+    backend_http_settings_name = "appgw-backend-http-settings-app-service"
   }
 }

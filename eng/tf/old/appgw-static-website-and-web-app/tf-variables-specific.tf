@@ -4,12 +4,12 @@ variable "custom_domain_name" {
 }
 
 variable "storage_custom_domain" {
-  type = string
+  type        = string
   description = "the custom domain for static http storage"
 }
 
 variable "app_service_custom_domain" {
-  type = string
+  type        = string
   description = "the custom domain for app service"
 }
 
