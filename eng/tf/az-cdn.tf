@@ -11,7 +11,9 @@ resource "azurerm_cdn_endpoint" "app" {
   location            = var.cdn_location
   resource_group_name = azurerm_resource_group.rg.name
 
-  is_http_allowed = false
+  is_http_allowed    = false
+  optimization_type  = "GeneralWebDelivery"
+  origin_host_header = azurerm_storage_account.account.primary_blob_host
 
   origin {
     name      = "blob"
@@ -25,7 +27,9 @@ resource "azurerm_cdn_endpoint" "static_website" {
   location            = var.cdn_location
   resource_group_name = azurerm_resource_group.rg.name
 
-  is_http_allowed = false
+  is_http_allowed   = false
+  optimization_type = "GeneralWebDelivery"
+  origin_host_header = azurerm_storage_account.account.primary_web_host
 
   origin {
     name      = "static-http"
