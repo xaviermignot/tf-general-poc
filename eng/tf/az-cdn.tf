@@ -6,7 +6,9 @@ resource "azurerm_cdn_profile" "profile" {
 }
 
 resource "azurerm_cdn_endpoint" "app" {
-  name                = "cdn-${var.project}-app"
+  count = local.number_of_apps
+
+  name                = "cdn-${var.project}-app${count.index}"
   profile_name        = azurerm_cdn_profile.profile.name
   location            = var.cdn_location
   resource_group_name = azurerm_resource_group.rg.name
@@ -14,6 +16,7 @@ resource "azurerm_cdn_endpoint" "app" {
   is_http_allowed    = false
   optimization_type  = "GeneralWebDelivery"
   origin_host_header = azurerm_storage_account.account.primary_blob_host
+  origin_path        = "/${azurerm_storage_container.app[count.index].name}"
 
   origin {
     name      = "blob"
@@ -27,8 +30,8 @@ resource "azurerm_cdn_endpoint" "static_website" {
   location            = var.cdn_location
   resource_group_name = azurerm_resource_group.rg.name
 
-  is_http_allowed   = false
-  optimization_type = "GeneralWebDelivery"
+  is_http_allowed    = false
+  optimization_type  = "GeneralWebDelivery"
   origin_host_header = azurerm_storage_account.account.primary_web_host
 
   origin {
