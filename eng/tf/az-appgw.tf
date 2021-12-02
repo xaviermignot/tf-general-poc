@@ -67,23 +67,23 @@ resource "azurerm_application_gateway" "app_gw" {
   }
 
   backend_http_settings {
-    name                  = "appgw-backend-http-settings-storage"
-    cookie_based_affinity = "Disabled"
-    protocol              = "Http"
-    port                  = 80
-    probe_name            = "appgw-probe-storage"
-    request_timeout       = 30
-    host_name             = azurerm_storage_account.account.primary_web_host
+    name                                = "appgw-backend-http-settings-storage"
+    cookie_based_affinity               = "Disabled"
+    protocol                            = "Http"
+    port                                = 80
+    probe_name                          = "appgw-probe-storage"
+    request_timeout                     = 30
+    pick_host_name_from_backend_address = true
   }
 
   probe {
-    name                = "appgw-probe-storage"
-    protocol            = "Http"
-    path                = "/"
-    host                = azurerm_storage_account.account.primary_web_host
-    interval            = 10
-    timeout             = 30
-    unhealthy_threshold = 3
+    name                                      = "appgw-probe-storage"
+    protocol                                  = "Http"
+    path                                      = "/"
+    pick_host_name_from_backend_http_settings = true
+    interval                                  = 10
+    timeout                                   = 30
+    unhealthy_threshold                       = 3
   }
 
   redirect_configuration {
