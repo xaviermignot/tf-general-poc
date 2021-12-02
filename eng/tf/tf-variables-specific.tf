@@ -1,14 +1,24 @@
-variable "cdn_location" {
+variable "custom_domain_name" {
   type        = string
-  description = "the location to use for the CDN resources"
+  description = "the custom domain name for app gateway"
 }
 
-variable "dns_zone_name" {
+variable "storage_custom_domain" {
   type        = string
-  description = "the name of the dns zone in Azure"
+  description = "the custom domain for static http storage"
 }
 
-variable "dns_zone_rg_name" {
+variable "app_service_custom_domain" {
   type        = string
-  description = "the name of the dns zone resource group"
+  description = "the custom domain for app service"
+}
+
+variable "organization_name" {
+  type        = string
+  description = "the name of the organization for the ssl cert"
+}
+
+variable "whitelisted_ips" {
+  type        = set(string)
+  description = "list of IPs to whitelist on various resources"
 }
