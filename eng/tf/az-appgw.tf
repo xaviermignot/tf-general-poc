@@ -2,7 +2,11 @@ locals {
   ssl_certificate_name           = "appgw-ssl-certificate"
   frontend_ip_configuration_name = "appgw-frontend-ip-configuration"
   http_port_name                 = "appgw-frontend-port-http"
+  http_settings_name             = "appgw-http-settings"
+  http_probe_name                = "appgw-http-probe"
   https_port_name                = "appgw-frontend-port-https"
+  https_settings_name            = "appgw-https-settings"
+  https_probe_name               = "appgw-https-probe"
 }
 
 resource "azurerm_application_gateway" "app_gw" {
@@ -28,19 +32,62 @@ resource "azurerm_application_gateway" "app_gw" {
     subnet_id = azurerm_subnet.appgw.id
   }
 
-  frontend_port {
-    name = local.https_port_name
-    port = 443
+  frontend_ip_configuration {
+    name                 = local.frontend_ip_configuration_name
+    public_ip_address_id = azurerm_public_ip.appgw.id
   }
 
+  # Common blocks for http: port, http settings and probe
   frontend_port {
     name = local.http_port_name
     port = 80
   }
 
-  frontend_ip_configuration {
-    name                 = local.frontend_ip_configuration_name
-    public_ip_address_id = azurerm_public_ip.appgw.id
+  backend_http_settings {
+    name                                = local.http_settings_name
+    cookie_based_affinity               = "Disabled"
+    protocol                            = "Http"
+    port                                = 80
+    probe_name                          = local.http_probe_name
+    request_timeout                     = 30
+    pick_host_name_from_backend_address = true
+  }
+
+  probe {
+    name                                      = local.http_probe_name
+    protocol                                  = "Http"
+    path                                      = "/"
+    pick_host_name_from_backend_http_settings = true
+    interval                                  = 10
+    timeout                                   = 30
+    unhealthy_threshold                       = 3
+  }
+
+  # Common blocks for https: port, http settings and probe
+  frontend_port {
+    name = local.https_port_name
+    port = 443
+  }
+
+  probe {
+    name                                      = local.https_probe_name
+    protocol                                  = "Https"
+    path                                      = "/"
+    pick_host_name_from_backend_http_settings = true
+    interval                                  = 10
+    timeout                                   = 30
+    unhealthy_threshold                       = 3
+  }
+
+  backend_http_settings {
+    name                                = local.https_settings_name
+    cookie_based_affinity               = "Disabled"
+    path                                = "/"
+    protocol                            = "Https"
+    port                                = 443
+    probe_name                          = local.https_probe_name
+    request_timeout                     = 30
+    pick_host_name_from_backend_address = true
   }
 
   # Blocks for Azure storage: listeners, rules, backend pool, ...
@@ -66,26 +113,6 @@ resource "azurerm_application_gateway" "app_gw" {
     fqdns = [azurerm_storage_account.account.primary_web_host]
   }
 
-  backend_http_settings {
-    name                                = "appgw-backend-http-settings-storage"
-    cookie_based_affinity               = "Disabled"
-    protocol                            = "Http"
-    port                                = 80
-    probe_name                          = "appgw-probe-storage"
-    request_timeout                     = 30
-    pick_host_name_from_backend_address = true
-  }
-
-  probe {
-    name                                      = "appgw-probe-storage"
-    protocol                                  = "Http"
-    path                                      = "/"
-    pick_host_name_from_backend_http_settings = true
-    interval                                  = 10
-    timeout                                   = 30
-    unhealthy_threshold                       = 3
-  }
-
   redirect_configuration {
     name                 = "appgw-http-storage-redirect"
     redirect_type        = "Permanent"
@@ -97,7 +124,7 @@ resource "azurerm_application_gateway" "app_gw" {
     rule_type                  = "Basic"
     http_listener_name         = "appgw-https-storage-listener"
     backend_address_pool_name  = "appgw-backend-address-pool-storage"
-    backend_http_settings_name = "appgw-backend-http-settings-storage"
+    backend_http_settings_name = local.http_settings_name
   }
 
   request_routing_rule {
@@ -136,33 +163,12 @@ resource "azurerm_application_gateway" "app_gw" {
     fqdns = [azurerm_app_service.app.default_site_hostname]
   }
 
-  probe {
-    name                                      = "appgw-probe-app-service"
-    protocol                                  = "Https"
-    path                                      = "/"
-    pick_host_name_from_backend_http_settings = true
-    interval                                  = 10
-    timeout                                   = 30
-    unhealthy_threshold                       = 3
-  }
-
-  backend_http_settings {
-    name                                = "appgw-backend-http-settings-app-service"
-    cookie_based_affinity               = "Disabled"
-    path                                = "/"
-    protocol                            = "Https"
-    port                                = 443
-    probe_name                          = "appgw-probe-app-service"
-    request_timeout                     = 30
-    pick_host_name_from_backend_address = true
-  }
-
   request_routing_rule {
     name                       = "appgw-routing-rule-https-app-service"
     rule_type                  = "Basic"
     http_listener_name         = "appgw-https-app-service-listener"
     backend_address_pool_name  = "appgw-backend-address-pool-app-service"
-    backend_http_settings_name = "appgw-backend-http-settings-app-service"
+    backend_http_settings_name = local.https_settings_name
   }
 
   request_routing_rule {
