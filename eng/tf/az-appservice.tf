@@ -23,6 +23,15 @@ resource "azurerm_app_service" "app" {
   resource_group_name = azurerm_resource_group.rg.name
   app_service_plan_id = azurerm_app_service_plan.plan.id
 
+  site_config {
+    linux_fx_version = "DOCKER|xaviermignot/tfgeneralpoc:aspnet-app"
+  }
+
+  app_settings = {
+    "DOCKER_REGISTRY_SERVER_URL"     = "https://index.docker.io/v1"
+    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.ai.instrumentation_key
+  }
+
   auth_settings {
     enabled = each.value
 
