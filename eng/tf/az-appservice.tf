@@ -24,12 +24,13 @@ resource "azurerm_app_service" "app" {
   app_service_plan_id = azurerm_app_service_plan.plan.id
 
   site_config {
-    linux_fx_version = "DOCKER|xaviermignot/tfgeneralpoc:aspnet-app"
+    linux_fx_version = "DOCKER|xaviermignot/tfgeneralpoc:latest"
   }
 
   app_settings = {
-    "DOCKER_REGISTRY_SERVER_URL"     = "https://index.docker.io/v1"
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.ai.instrumentation_key
+    "DOCKER_REGISTRY_SERVER_URL"          = "https://index.docker.io/v1"
+    "APPINSIGHTS_INSTRUMENTATIONKEY"      = azurerm_application_insights.ai.instrumentation_key
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = false
   }
 
   auth_settings {
@@ -45,4 +46,26 @@ resource "azurerm_app_service" "app" {
       client_secret = each.value ? azuread_application_password.easy_auth.value : null
     }
   }
+}
+
+resource "azurerm_app_service_custom_hostname_binding" "app" {
+  hostname            = trim(azurerm_dns_cname_record.app.fqdn, ".")
+  app_service_name    = azurerm_app_service.app["auth"].name
+  resource_group_name = azurerm_app_service.app["auth"].resource_group_name
+
+  depends_on = [azurerm_dns_txt_record.app]
+
+  lifecycle {
+    ignore_changes = [ssl_state, thumbprint]
+  }
+}
+
+resource "azurerm_app_service_managed_certificate" "app" {
+  custom_hostname_binding_id = azurerm_app_service_custom_hostname_binding.app.id
+}
+
+resource "azurerm_app_service_certificate_binding" "app" {
+  hostname_binding_id = azurerm_app_service_custom_hostname_binding.app.id
+  certificate_id      = azurerm_app_service_managed_certificate.app.id
+  ssl_state           = "SniEnabled"
 }
