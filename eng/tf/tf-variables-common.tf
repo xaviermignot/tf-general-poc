@@ -17,3 +17,15 @@ variable "dns_zone_rg_name" {
   type        = string
   description = "the name of the resource group containing the DNS zone"
 }
+
+variable "certificate_name" {
+  type = string
+}
+
+variable "certificate_kv_name" {
+  type = string
+}
+
+variable "certificate_rg_name" {
+  type = string
+}

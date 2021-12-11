@@ -49,7 +49,7 @@ resource "azurerm_app_service" "app" {
 }
 
 resource "azurerm_app_service_custom_hostname_binding" "app" {
-  hostname            = trim(azurerm_dns_cname_record.app.fqdn, ".")
+  hostname            = var.app_service_custom_domain
   app_service_name    = azurerm_app_service.app["auth"].name
   resource_group_name = azurerm_app_service.app["auth"].resource_group_name
 

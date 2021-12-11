@@ -9,6 +9,28 @@ locals {
   https_probe_name               = "appgw-https-probe"
 }
 
+data "azurerm_key_vault" "cert" {
+  name                = var.certificate_kv_name
+  resource_group_name = var.certificate_rg_name
+}
+
+data "azurerm_key_vault_certificate" "cert" {
+  name         = var.certificate_name
+  key_vault_id = data.azurerm_key_vault.cert.id
+}
+
+resource "azurerm_user_assigned_identity" "app_gw" {
+  name                = "msi-appgw-${var.project}"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+resource "azurerm_role_assignment" "app_gw_kv" {
+  scope                = data.azurerm_key_vault.cert.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.app_gw.principal_id
+}
+
 resource "azurerm_application_gateway" "app_gw" {
   name                = "appgw-${var.project}"
   resource_group_name = azurerm_resource_group.rg.name
@@ -20,11 +42,14 @@ resource "azurerm_application_gateway" "app_gw" {
     capacity = 1
   }
 
+  identity {
+    identity_ids = [azurerm_user_assigned_identity.app_gw.id]
+  }
+
   # Common blocks: certificates, ip configuration, ...
   ssl_certificate {
-    name     = local.ssl_certificate_name
-    data     = pkcs12_from_pem.self_signed_cert.result
-    password = random_password.self_signed_cert.result
+    name                = local.ssl_certificate_name
+    key_vault_secret_id = data.azurerm_key_vault_certificate.cert.secret_id
   }
 
   gateway_ip_configuration {
