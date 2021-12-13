@@ -22,3 +22,18 @@ variable "whitelisted_ips" {
   type        = set(string)
   description = "list of IPs to whitelist on various resources"
 }
+
+locals {
+  app_services = {
+    "auth" = {
+      name             = "web-${var.project}-auth"
+      easy_auth        = true
+      custom_subdomain = "appgw-app-auth"
+    }
+    "no-auth" = {
+      name             = "web-${var.project}-no-auth"
+      easy_auth        = false
+      custom_subdomain = "appgw-app-no-auth"
+    }
+  }
+}

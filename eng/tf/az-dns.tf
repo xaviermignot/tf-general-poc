@@ -8,33 +8,39 @@ locals {
 }
 
 # DNS records for app service
-# A record to link subdomain to app gateway
-resource "azurerm_dns_a_record" "app_gw_app" {
-  name                = local.app_service_subdomain
-  zone_name           = data.azurerm_dns_zone.dns.name
-  resource_group_name = data.azurerm_dns_zone.dns.resource_group_name
-  ttl                 = 300
-  target_resource_id  = azurerm_public_ip.appgw.id
-}
+# A records to link subdomain to app gateway
+# resource "azurerm_dns_a_record" "app_gw_app" {
+#   for_each = local.app_services
 
-# CNAME record to link subdomain to app service
-# resource "azurerm_dns_cname_record" "app_gw_app" {
-#   name                = local.app_service_subdomain
+#   name                = each.value.custom_subdomain
 #   zone_name           = data.azurerm_dns_zone.dns.name
 #   resource_group_name = data.azurerm_dns_zone.dns.resource_group_name
 #   ttl                 = 300
-#   record              = azurerm_app_service.app["auth"].default_site_hostname
+#   target_resource_id  = azurerm_public_ip.appgw.id
 # }
 
-# TXT record for verifying domain ownership
+# CNAME records to link subdomain to app service
+resource "azurerm_dns_cname_record" "app_gw_app" {
+  for_each = local.app_services
+
+  name                = each.value.custom_subdomain
+  zone_name           = data.azurerm_dns_zone.dns.name
+  resource_group_name = data.azurerm_dns_zone.dns.resource_group_name
+  ttl                 = 300
+  record              = azurerm_app_service.app[each.key].default_site_hostname
+}
+
+# TXT records for verifying domain ownership
 resource "azurerm_dns_txt_record" "app" {
-  name                = "asuid.${local.app_service_subdomain}"
+  for_each = local.app_services
+
+  name                = "asuid.${each.value.custom_subdomain}"
   zone_name           = data.azurerm_dns_zone.dns.name
   resource_group_name = data.azurerm_dns_zone.dns.resource_group_name
   ttl                 = 300
 
   record {
-    value = azurerm_app_service.app["auth"].custom_domain_verification_id
+    value = azurerm_app_service.app[each.key].custom_domain_verification_id
   }
 }
 
