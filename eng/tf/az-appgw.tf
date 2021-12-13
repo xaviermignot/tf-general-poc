@@ -5,8 +5,8 @@ locals {
   http_settings_name             = "appgw-http-settings"
   http_probe_name                = "appgw-http-probe"
   https_port_name                = "appgw-frontend-port-https"
-  https_settings_name            = "appgw-https-settings"
-  https_probe_name               = "appgw-https-probe"
+  aps_http_settings_name         = "appgw-aps-http-settings"
+  aps_probe_name                 = "appgw-aps-probe"
 }
 
 data "azurerm_key_vault" "cert" {
@@ -94,31 +94,6 @@ resource "azurerm_application_gateway" "app_gw" {
     port = 443
   }
 
-  probe {
-    name                                      = local.https_probe_name
-    protocol                                  = "Https"
-    path                                      = "/"
-    pick_host_name_from_backend_http_settings = true
-    interval                                  = 10
-    timeout                                   = 30
-    unhealthy_threshold                       = 3
-
-    match {
-      status_code = ["200-399", "401"]
-    }
-  }
-
-  backend_http_settings {
-    name                                = local.https_settings_name
-    cookie_based_affinity               = "Disabled"
-    path                                = "/"
-    protocol                            = "Https"
-    port                                = 443
-    probe_name                          = local.https_probe_name
-    request_timeout                     = 30
-    pick_host_name_from_backend_address = true
-  }
-
   # Blocks for Azure storage: listeners, rules, backend pool, ...
   http_listener {
     name                           = "appgw-https-storage-listener"
@@ -163,7 +138,32 @@ resource "azurerm_application_gateway" "app_gw" {
     redirect_configuration_name = "appgw-http-storage-redirect"
   }
 
-  # Blocks for App Service: listeners, rules, backend pool, ...
+  # Blocks for App Service: probe, http settins, listeners, rules, backend pool, ...
+  # Probe & http settings are specific to app service as it depends on the custom domain
+  probe {
+    name                = local.aps_probe_name
+    protocol            = "Https"
+    host                = var.app_service_custom_domain
+    path                = "/"
+    interval            = 10
+    timeout             = 30
+    unhealthy_threshold = 3
+
+    match {
+      status_code = ["200-399", "401"]
+    }
+  }
+
+  backend_http_settings {
+    name                  = local.aps_http_settings_name
+    cookie_based_affinity = "Disabled"
+    path                  = "/"
+    protocol              = "Https"
+    port                  = 443
+    probe_name            = local.aps_probe_name
+    request_timeout       = 30
+  }
+
   http_listener {
     name                           = "appgw-https-app-service-listener"
     frontend_ip_configuration_name = local.frontend_ip_configuration_name
@@ -197,7 +197,7 @@ resource "azurerm_application_gateway" "app_gw" {
     rule_type                  = "Basic"
     http_listener_name         = "appgw-https-app-service-listener"
     backend_address_pool_name  = "appgw-backend-address-pool-app-service"
-    backend_http_settings_name = local.https_settings_name
+    backend_http_settings_name = local.aps_http_settings_name
   }
 
   request_routing_rule {
