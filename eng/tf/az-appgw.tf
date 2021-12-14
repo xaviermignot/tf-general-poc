@@ -94,6 +94,31 @@ resource "azurerm_application_gateway" "app_gw" {
     port = 443
   }
 
+  probe {
+    name                                      = "${local.aps_probe_name}-default"
+    protocol                                  = "Https"
+    pick_host_name_from_backend_http_settings = true
+    path                                      = "/"
+    interval                                  = 10
+    timeout                                   = 30
+    unhealthy_threshold                       = 3
+
+    match {
+      status_code = ["200-399", "401"]
+    }
+  }
+
+  backend_http_settings {
+    name                                = "${local.aps_http_settings_name}-default"
+    cookie_based_affinity               = "Disabled"
+    path                                = "/"
+    protocol                            = "Https"
+    port                                = 443
+    probe_name                          = "${local.aps_probe_name}-default"
+    request_timeout                     = 30
+    pick_host_name_from_backend_address = true
+  }
+
   # Blocks for Azure storage: listeners, rules, backend pool, ...
   http_listener {
     name                           = "appgw-https-storage-listener"
