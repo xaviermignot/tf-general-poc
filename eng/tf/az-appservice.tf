@@ -60,7 +60,6 @@ resource "azurerm_app_service_custom_hostname_binding" "app" {
 }
 
 resource "azurerm_app_service_managed_certificate" "app" {
-  # for_each = azurerm_app_service_custom_hostname_binding.app
   for_each = local.app_services
 
   custom_hostname_binding_id =  azurerm_app_service_custom_hostname_binding.app[each.key].id

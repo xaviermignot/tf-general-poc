@@ -140,70 +140,102 @@ resource "azurerm_application_gateway" "app_gw" {
 
   # Blocks for App Service: probe, http settins, listeners, rules, backend pool, ...
   # Probe & http settings are specific to app service as it depends on the custom domain
-  probe {
-    name                = local.aps_probe_name
-    protocol            = "Https"
-    host                = var.app_service_custom_domain
-    path                = "/"
-    interval            = 10
-    timeout             = 30
-    unhealthy_threshold = 3
+  dynamic "probe" {
+    for_each = local.app_services
 
-    match {
-      status_code = ["200-399", "401"]
+    content {
+      name                = "${local.aps_probe_name}-${probe.key}"
+      protocol            = "Https"
+      host                = "${probe.value["custom_subdomain"]}.${var.dns_zone_name}"
+      path                = "/"
+      interval            = 10
+      timeout             = 30
+      unhealthy_threshold = 3
+
+      match {
+        status_code = ["200-399", "401"]
+      }
     }
   }
 
-  backend_http_settings {
-    name                  = local.aps_http_settings_name
-    cookie_based_affinity = "Disabled"
-    path                  = "/"
-    protocol              = "Https"
-    port                  = 443
-    probe_name            = local.aps_probe_name
-    request_timeout       = 30
+  dynamic "backend_http_settings" {
+    for_each = local.app_services
+
+    content {
+      name                  = "${local.aps_http_settings_name}-${backend_http_settings.key}"
+      cookie_based_affinity = "Disabled"
+      path                  = "/"
+      protocol              = "Https"
+      port                  = 443
+      probe_name            = "${local.aps_probe_name}-${backend_http_settings.key}"
+      request_timeout       = 30
+    }
   }
 
-  http_listener {
-    name                           = "appgw-https-app-service-listener"
-    frontend_ip_configuration_name = local.frontend_ip_configuration_name
-    frontend_port_name             = local.https_port_name
-    host_name                      = var.app_service_custom_domain
-    ssl_certificate_name           = local.ssl_certificate_name
-    protocol                       = "Https"
+  dynamic "http_listener" {
+    for_each = local.app_services
+
+    content {
+      name                           = "appgw-https-aps-listener-${http_listener.key}"
+      frontend_ip_configuration_name = local.frontend_ip_configuration_name
+      frontend_port_name             = local.https_port_name
+      host_name                      = "${http_listener.value["custom_subdomain"]}.${var.dns_zone_name}"
+      ssl_certificate_name           = local.ssl_certificate_name
+      protocol                       = "Https"
+    }
   }
 
-  http_listener {
-    name                           = "appgw-http-app-service-listener"
-    frontend_ip_configuration_name = local.frontend_ip_configuration_name
-    frontend_port_name             = local.http_port_name
-    host_name                      = var.app_service_custom_domain
-    protocol                       = "Http"
+  dynamic "http_listener" {
+    for_each = local.app_services
+
+    content {
+      name                           = "appgw-http-aps-listener-${http_listener.key}"
+      frontend_ip_configuration_name = local.frontend_ip_configuration_name
+      frontend_port_name             = local.http_port_name
+      host_name                      = "${http_listener.value["custom_subdomain"]}.${var.dns_zone_name}"
+      protocol                       = "Http"
+    }
   }
 
-  redirect_configuration {
-    name                 = "appgw-http-app-service-redirect"
-    redirect_type        = "Permanent"
-    target_listener_name = "appgw-https-app-service-listener"
+  dynamic "redirect_configuration" {
+    for_each = local.app_services
+
+    content {
+      name                 = "appgw-http-aps-redirect-${redirect_configuration.key}"
+      redirect_type        = "Permanent"
+      target_listener_name = "appgw-https-aps-listener-${redirect_configuration.key}"
+    }
   }
 
-  backend_address_pool {
-    name  = "appgw-backend-address-pool-app-service"
-    fqdns = [azurerm_app_service.app["auth"].default_site_hostname]
+  dynamic "backend_address_pool" {
+    for_each = local.app_services
+
+    content {
+      name  = "appgw-backend-address-pool-aps-${backend_address_pool.key}"
+      fqdns = [azurerm_app_service.app[backend_address_pool.key].default_site_hostname]
+    }
   }
 
-  request_routing_rule {
-    name                       = "appgw-routing-rule-https-app-service"
-    rule_type                  = "Basic"
-    http_listener_name         = "appgw-https-app-service-listener"
-    backend_address_pool_name  = "appgw-backend-address-pool-app-service"
-    backend_http_settings_name = local.aps_http_settings_name
+  dynamic "request_routing_rule" {
+    for_each = local.app_services
+
+    content {
+      name                       = "appgw-routing-rule-https-aps-${request_routing_rule.key}"
+      rule_type                  = "Basic"
+      http_listener_name         = "appgw-https-aps-listener-${request_routing_rule.key}"
+      backend_address_pool_name  = "appgw-backend-address-pool-aps-${request_routing_rule.key}"
+      backend_http_settings_name = "${local.aps_http_settings_name}-${request_routing_rule.key}"
+    }
   }
 
-  request_routing_rule {
-    name                        = "appgw-routing-rule-http-app-service"
-    rule_type                   = "Basic"
-    http_listener_name          = "appgw-http-app-service-listener"
-    redirect_configuration_name = "appgw-http-app-service-redirect"
+  dynamic "request_routing_rule" {
+    for_each = local.app_services
+
+    content {
+      name                        = "appgw-routing-rule-http-aps-${request_routing_rule.key}"
+      rule_type                   = "Basic"
+      http_listener_name          = "appgw-http-aps-listener-${request_routing_rule.key}"
+      redirect_configuration_name = "appgw-http-aps-redirect-${request_routing_rule.key}"
+    }
   }
 }
