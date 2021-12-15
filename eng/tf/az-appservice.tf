@@ -8,7 +8,7 @@ resource "azurerm_app_service_plan" "plan" {
 
   sku {
     tier = "PremiumV2"
-    size = "P1V2"
+    size = "P1v2"
   }
 }
 
@@ -21,7 +21,7 @@ resource "azurerm_app_service" "app" {
   app_service_plan_id = azurerm_app_service_plan.plan.id
 
   site_config {
-    linux_fx_version = "DOCKER|xaviermignot/tfgeneralpoc:latest"
+    linux_fx_version = "DOCKER|xaviermignot/tfgeneralpoc.slim:latest"
   }
 
   app_settings = {

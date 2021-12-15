@@ -21,14 +21,24 @@ resource "azurerm_subnet" "app" {
 
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = ["10.1.2.0/24"]
+
+  delegation {
+    name = "azure-app-service"
+
+    service_delegation {
+      name    = "Microsoft.Web/serverFarms"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  }
 }
 
 resource "azurerm_subnet" "endpoints" {
   name                = "subnet-endpoints"
   resource_group_name = azurerm_resource_group.rg.name
 
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["10.1.3.0/24"]
+  virtual_network_name                           = azurerm_virtual_network.vnet.name
+  address_prefixes                               = ["10.1.3.0/24"]
+  enforce_private_link_endpoint_network_policies = true
 }
 
 resource "azurerm_public_ip" "appgw" {
