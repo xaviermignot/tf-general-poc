@@ -75,44 +75,10 @@ resource "azurerm_application_gateway" "app_gw" {
     port = 80
   }
 
-  backend_http_settings {
-    name                                = local.http_settings_name
-    cookie_based_affinity               = "Disabled"
-    protocol                            = "Http"
-    port                                = 80
-    probe_name                          = local.http_probe_name
-    request_timeout                     = 30
-    pick_host_name_from_backend_address = true
-  }
-
-  probe {
-    name                                      = local.http_probe_name
-    protocol                                  = "Http"
-    path                                      = "/"
-    pick_host_name_from_backend_http_settings = true
-    interval                                  = 10
-    timeout                                   = 30
-    unhealthy_threshold                       = 3
-  }
-
   # Common blocks for https: port, http settings and probe
   frontend_port {
     name = local.https_port_name
     port = 443
-  }
-
-  probe {
-    name                                      = "${local.aps_probe_name}-default"
-    protocol                                  = "Https"
-    pick_host_name_from_backend_http_settings = true
-    path                                      = "/"
-    interval                                  = 10
-    timeout                                   = 30
-    unhealthy_threshold                       = 3
-
-    match {
-      status_code = ["200-399", "401"]
-    }
   }
 
   backend_http_settings {
@@ -121,15 +87,13 @@ resource "azurerm_application_gateway" "app_gw" {
     path                                = "/"
     protocol                            = "Https"
     port                                = 443
-    probe_name                          = "${local.aps_probe_name}-default"
     request_timeout                     = 30
     pick_host_name_from_backend_address = true
   }
 
-  # Blocks for App Service: probe, http settins, listeners, rules, backend pool, ...
-  # Probe & http settings are specific to app service as it depends on the custom domain
+  # Blocks for App Service with easy auth: probe with hostname and http settings using these probes
   dynamic "probe" {
-    for_each = local.app_services
+    for_each = { for key, val in local.app_services : key => val if val.easy_auth }
 
     content {
       name                = "${local.aps_probe_name}-${probe.key}"
@@ -146,9 +110,9 @@ resource "azurerm_application_gateway" "app_gw" {
     }
   }
 
-  # Backend pools for app services
+  # HTTP settings for app services (only for apps with easy auth)
   dynamic "backend_http_settings" {
-    for_each = local.app_services
+    for_each = { for key, val in local.app_services : key => val if val.easy_auth }
 
     content {
       name                  = "${local.aps_http_settings_name}-${backend_http_settings.key}"
@@ -222,16 +186,6 @@ resource "azurerm_application_gateway" "app_gw" {
     }
   }
 
-  # Backend pools for scm
-  dynamic "backend_address_pool" {
-    for_each = local.app_services
-
-    content {
-      name  = "appgw-backend-address-pool-aps-scm-${backend_address_pool.key}"
-      fqdns = ["${azurerm_app_service.app[backend_address_pool.key].name}.scm.azurewebsites.net"]
-    }
-  }
-
   # Routing rules for HTTPS
   dynamic "request_routing_rule" {
     for_each = local.app_services
@@ -241,7 +195,7 @@ resource "azurerm_application_gateway" "app_gw" {
       rule_type                  = "Basic"
       http_listener_name         = "appgw-https-aps-listener-${request_routing_rule.key}"
       backend_address_pool_name  = "appgw-backend-address-pool-aps-${request_routing_rule.key}"
-      backend_http_settings_name = "${local.aps_http_settings_name}-${request_routing_rule.key}"
+      backend_http_settings_name = request_routing_rule.value.easy_auth ? "${local.aps_http_settings_name}-${request_routing_rule.key}" : "${local.aps_http_settings_name}-default"
     }
   }
 
@@ -257,6 +211,42 @@ resource "azurerm_application_gateway" "app_gw" {
     }
   }
 
+  # Blocks for SCM: probe accepting 401 and http settings using this probe
+  probe {
+    name                                      = "${local.aps_probe_name}-scm"
+    protocol                                  = "Https"
+    pick_host_name_from_backend_http_settings = true
+    path                                      = "/"
+    interval                                  = 10
+    timeout                                   = 30
+    unhealthy_threshold                       = 3
+
+    match {
+      status_code = ["200-399", "401"]
+    }
+  }
+
+  backend_http_settings {
+    name                                = "${local.aps_http_settings_name}-scm"
+    cookie_based_affinity               = "Disabled"
+    path                                = "/"
+    protocol                            = "Https"
+    port                                = 443
+    probe_name                          = "${local.aps_probe_name}-scm"
+    request_timeout                     = 30
+    pick_host_name_from_backend_address = true
+  }
+
+  # Backend pools for scm
+  dynamic "backend_address_pool" {
+    for_each = local.app_services
+
+    content {
+      name  = "appgw-backend-address-pool-aps-scm-${backend_address_pool.key}"
+      fqdns = ["${azurerm_app_service.app[backend_address_pool.key].name}.scm.azurewebsites.net"]
+    }
+  }
+
   # Routing rules for scm
   dynamic "request_routing_rule" {
     for_each = local.app_services
@@ -266,7 +256,7 @@ resource "azurerm_application_gateway" "app_gw" {
       rule_type                  = "Basic"
       http_listener_name         = "appgw-https-aps-scm-listener-${request_routing_rule.key}"
       backend_address_pool_name  = "appgw-backend-address-pool-aps-scm-${request_routing_rule.key}"
-      backend_http_settings_name = "${local.aps_http_settings_name}-default"
+      backend_http_settings_name = "${local.aps_http_settings_name}-scm"
     }
   }
 }
