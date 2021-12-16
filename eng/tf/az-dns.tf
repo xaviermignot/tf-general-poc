@@ -55,15 +55,6 @@ resource "azurerm_dns_txt_record" "app" {
   }
 }
 
-# DNS records for static storage
-resource "azurerm_dns_a_record" "app_gw_static" {
-  name                = "appgw-static"
-  zone_name           = data.azurerm_dns_zone.dns.name
-  resource_group_name = data.azurerm_dns_zone.dns.resource_group_name
-  ttl                 = 300
-  target_resource_id  = azurerm_public_ip.appgw.id
-}
-
 # Wait for DNS propagation
 resource "time_sleep" "dns_app" {
   for_each = local.app_services
@@ -75,13 +66,5 @@ resource "time_sleep" "dns_app" {
     azurerm_dns_a_record.app_gw_app,
     # azurerm_dns_cname_record.app_gw_app,
     azurerm_dns_a_record.app_gw_scm
-  ]
-}
-
-resource "time_sleep" "name" {
-  create_duration = "10s"
-
-  depends_on = [
-    azurerm_dns_a_record.app_gw_static
   ]
 }
