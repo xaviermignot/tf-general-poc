@@ -67,14 +67,6 @@ resource "azurerm_app_service_managed_certificate" "app" {
   custom_hostname_binding_id = azurerm_app_service_custom_hostname_binding.app[each.key].id
 }
 
-resource "azurerm_app_service_certificate" "app" {
-  name                = "cert-${var.project}"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = var.location
-
-  key_vault_secret_id = data.azurerm_key_vault_certificate.cert.secret_id
-}
-
 resource "azurerm_app_service_certificate_binding" "app" {
   for_each = azurerm_app_service_custom_hostname_binding.app
 
