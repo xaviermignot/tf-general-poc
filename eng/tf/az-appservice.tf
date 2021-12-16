@@ -58,6 +58,13 @@ resource "azurerm_app_service_custom_hostname_binding" "app" {
   lifecycle {
     ignore_changes = [ssl_state, thumbprint]
   }
+
+  provisioner "local-exec" {
+    command = <<EOT
+      az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
+      az network dns record-set cname set-record -g ${var.dns_zone_rg_name} -z ${var.dns_zone_name} -n ${each.value.custom_subdomain} -c ${each.value.name}.azurewebsites.net
+    EOT
+  }
 }
 
 # Managed certificates & bindings
@@ -65,6 +72,13 @@ resource "azurerm_app_service_managed_certificate" "app" {
   for_each = local.app_services
 
   custom_hostname_binding_id = azurerm_app_service_custom_hostname_binding.app[each.key].id
+
+  provisioner "local-exec" {
+    command = <<EOT
+      az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
+      az network dns record-set cname remove-record -g ${var.dns_zone_rg_name} -z ${var.dns_zone_name} -n ${each.value.custom_subdomain} -c ${each.value.name}.azurewebsites.net
+    EOT
+  }
 }
 
 resource "azurerm_app_service_certificate_binding" "app" {
