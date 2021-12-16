@@ -63,3 +63,25 @@ resource "azurerm_dns_a_record" "app_gw_static" {
   ttl                 = 300
   target_resource_id  = azurerm_public_ip.appgw.id
 }
+
+# Wait for DNS propagation
+resource "time_sleep" "dns_app" {
+  for_each = local.app_services
+
+  create_duration = "10s"
+
+  depends_on = [
+    azurerm_dns_txt_record.app,
+    azurerm_dns_a_record.app_gw_app,
+    # azurerm_dns_cname_record.app_gw_app,
+    azurerm_dns_a_record.app_gw_scm
+  ]
+}
+
+resource "time_sleep" "name" {
+  create_duration = "10s"
+
+  depends_on = [
+    azurerm_dns_a_record.app_gw_static
+  ]
+}
