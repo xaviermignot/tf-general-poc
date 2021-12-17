@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/azuread"
       version = "2.12.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "3.1.0"
+    }
     tls = {
       source  = "hashicorp/tls"
       version = "3.1.0"

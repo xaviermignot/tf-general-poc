@@ -18,8 +18,9 @@ resource "azurerm_dns_a_record" "app_gw_app" {
   ttl                 = 300
   target_resource_id  = azurerm_public_ip.appgw.id
 
+  # Create the A records once the short-lived CNAME records have been removed
   depends_on = [
-    azurerm_app_service_certificate_binding.app
+    null_resource.cname_remove
   ]
 }
 
@@ -57,7 +58,6 @@ resource "time_sleep" "dns_app" {
   depends_on = [
     azurerm_dns_txt_record.app,
     azurerm_dns_a_record.app_gw_app,
-    # azurerm_dns_cname_record.app_gw_app,
     azurerm_dns_a_record.app_gw_scm
   ]
 }

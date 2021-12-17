@@ -259,4 +259,8 @@ resource "azurerm_application_gateway" "app_gw" {
       backend_http_settings_name = "${local.aps_http_settings_name}-scm"
     }
   }
+
+  # This depends_on forces the creation of backend pools AFTER private endpoints, eliminating
+  # 403 errors between the gateway and the backends
+  depends_on = [azurerm_private_endpoint.app]
 }

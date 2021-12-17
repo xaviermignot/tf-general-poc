@@ -59,6 +59,7 @@ resource "azurerm_app_service_custom_hostname_binding" "app" {
     ignore_changes = [ssl_state, thumbprint]
   }
 
+  # Short-lived CNAME record required for managed certificate binding
   provisioner "local-exec" {
     command = <<EOT
       az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
@@ -72,13 +73,6 @@ resource "azurerm_app_service_managed_certificate" "app" {
   for_each = local.app_services
 
   custom_hostname_binding_id = azurerm_app_service_custom_hostname_binding.app[each.key].id
-
-  provisioner "local-exec" {
-    command = <<EOT
-      az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
-      az network dns record-set cname remove-record -g ${var.dns_zone_rg_name} -z ${var.dns_zone_name} -n ${each.value.custom_subdomain} -c ${each.value.name}.azurewebsites.net
-    EOT
-  }
 }
 
 resource "azurerm_app_service_certificate_binding" "app" {
@@ -87,6 +81,27 @@ resource "azurerm_app_service_certificate_binding" "app" {
   hostname_binding_id = each.value.id
   certificate_id      = azurerm_app_service_managed_certificate.app[each.key].id
   ssl_state           = "SniEnabled"
+}
+
+# Deletion of CNAME record to avoid conflicts with upcoming A record pointing to gateway public IP
+resource "null_resource" "cname_remove" {
+  for_each = local.app_services
+
+  provisioner "local-exec" {
+    command = <<EOT
+      az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
+      az network dns record-set cname remove-record -g ${var.dns_zone_rg_name} -z ${var.dns_zone_name} -n ${each.value.custom_subdomain} -c ${each.value.name}.azurewebsites.net
+    EOT
+  }
+
+  depends_on = [azurerm_app_service_certificate_binding.app]
+}
+
+# Tempo after CNAME record deletion
+resource "time_sleep" "cname_create" {
+  create_duration = "10s"
+
+  depends_on = [null_resource.cname_remove]
 }
 
 # VNet integration
