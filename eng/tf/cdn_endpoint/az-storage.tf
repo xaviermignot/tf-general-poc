@@ -4,7 +4,9 @@ data "azurerm_storage_account" "account" {
 }
 
 resource "azurerm_storage_container" "app" {
-  name                  = var.app_name
+  count = var.origin_type == "blob" ? 1 : 0
+
+  name                  = var.endpoint_name
   storage_account_name  = data.azurerm_storage_account.account.name
   container_access_type = "blob"
 }
@@ -12,9 +14,9 @@ resource "azurerm_storage_container" "app" {
 resource "azurerm_storage_blob" "index" {
   name                   = "index.html"
   storage_account_name   = data.azurerm_storage_account.account.name
-  storage_container_name = azurerm_storage_container.app.name
+  storage_container_name = var.origin_type == "blob" ? azurerm_storage_container.app[0].name : "$web"
 
   type           = "Block"
   content_type   = "text/html; charset=utf-8"
-  source_content = "<html><body><h1>Hello from ${var.app_name} !!!</h1></body></html>"
+  source_content = "<html><body><h1>Hello from ${var.endpoint_name} !!!</h1></body></html>"
 }

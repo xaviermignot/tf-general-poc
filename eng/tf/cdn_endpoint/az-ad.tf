@@ -1,5 +1,5 @@
 resource "azuread_group" "app" {
-  display_name     = "Grp-CDN-Contributors-${var.app_name}"
+  display_name     = "Grp-CDN-Contributors-${var.endpoint_name}"
   security_enabled = true
 }
 

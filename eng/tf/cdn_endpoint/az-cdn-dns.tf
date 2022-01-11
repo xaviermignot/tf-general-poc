@@ -1,5 +1,5 @@
 resource "azurerm_dns_cname_record" "app" {
-  name                = "cdn-${var.app_name}"
+  name                = "cdn-${var.endpoint_name}"
   zone_name           = var.dns_zone_name
   resource_group_name = var.dns_zone_rg_name
   ttl                 = 3600

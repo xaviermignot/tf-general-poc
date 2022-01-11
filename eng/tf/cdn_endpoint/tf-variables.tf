@@ -28,7 +28,7 @@ variable "cdn_location" {
   description = "the location to use for the CDN resources"
 }
 
-variable "app_name" {
+variable "endpoint_name" {
   type = string
 }
 
@@ -37,5 +37,15 @@ variable "storage_account_name" {
 }
 
 variable "cdn_profile_name" {
-    type = string
+  type = string
+}
+
+variable "origin_type" {
+  type    = string
+  default = "blob"
+
+  validation {
+    condition     = contains(["blob", "static_website"], var.origin_type)
+    error_message = "The origin_type must be either blob or static_website."
+  }
 }
