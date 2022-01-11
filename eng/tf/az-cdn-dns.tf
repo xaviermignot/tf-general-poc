@@ -19,4 +19,12 @@ resource "azurerm_cdn_endpoint_custom_domain" "app" {
   name            = "cdn-dns-app"
   cdn_endpoint_id = azurerm_cdn_endpoint.app[count.index].id
   host_name       = "${azurerm_dns_cname_record.app[count.index].name}.${data.azurerm_dns_zone.zone.name}"
+
+  # Provisioner as Terraform does not provide a way to enable the TLS feature of CDN custom domains
+  provisioner "local-exec" {
+    command = <<EOT
+      az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
+      az cdn custom-domain enable-https -g ${azurerm_resource_group.rg.name} --profile-name ${azurerm_cdn_profile.profile.name} --endpoint-name ${azurerm_cdn_endpoint.app[count.index].name} -n ${self.name}
+    EOT
+  }
 }
