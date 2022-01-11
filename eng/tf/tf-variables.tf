@@ -29,3 +29,7 @@ variable "certificate_kv_name" {
 variable "certificate_rg_name" {
   type = string
 }
+
+variable "cdn_location" {
+  type = string
+}

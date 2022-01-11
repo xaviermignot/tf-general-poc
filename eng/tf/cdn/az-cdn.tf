@@ -1,7 +1,7 @@
 resource "azurerm_cdn_profile" "profile" {
   name                = "cdn-${var.project}-profile"
   location            = var.cdn_location
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
   sku                 = "Standard_Microsoft"
 }
 
@@ -11,7 +11,7 @@ resource "azurerm_cdn_endpoint" "app" {
   name                = "cdn-${var.project}-app${count.index}"
   profile_name        = azurerm_cdn_profile.profile.name
   location            = var.cdn_location
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
 
   is_http_allowed    = false
   optimization_type  = "GeneralWebDelivery"
@@ -25,10 +25,12 @@ resource "azurerm_cdn_endpoint" "app" {
 }
 
 resource "azurerm_cdn_endpoint" "static_website" {
+  count = var.enable_static_website ? 1 : 0
+
   name                = "cdn-${var.project}-web"
   profile_name        = azurerm_cdn_profile.profile.name
   location            = var.cdn_location
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
 
   is_http_allowed    = false
   optimization_type  = "GeneralWebDelivery"

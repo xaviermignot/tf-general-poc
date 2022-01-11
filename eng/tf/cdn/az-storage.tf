@@ -1,6 +1,6 @@
 resource "azurerm_storage_account" "account" {
   name                = "stor${replace(var.project, "-", "")}"
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
   location            = var.location
 
   account_replication_type  = "LRS"
@@ -9,8 +9,12 @@ resource "azurerm_storage_account" "account" {
   enable_https_traffic_only = true
   min_tls_version           = "TLS1_2"
 
-  static_website {
-    index_document = "index.html"
+  dynamic "static_website" {
+    for_each = var.enable_static_website ? { foo = "bar" } : {}
+
+    content {
+      index_document = "index.html"
+    }
   }
 }
 
@@ -35,6 +39,8 @@ resource "azurerm_storage_blob" "index" {
 }
 
 resource "azurerm_storage_blob" "static_index" {
+  count = var.enable_static_website ? 1 : 0
+
   name                   = "index.html"
   storage_account_name   = azurerm_storage_account.account.name
   storage_container_name = "$web"
