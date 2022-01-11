@@ -28,11 +28,6 @@ variable "cdn_location" {
   description = "the location to use for the CDN resources"
 }
 
-variable "enable_static_website" {
-  type        = bool
-  description = "defines if the static web site should be enabled on the storage account"
-}
-
 variable "app_name" {
   type = string
 }
