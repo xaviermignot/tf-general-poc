@@ -17,15 +17,3 @@ resource "azurerm_storage_account" "account" {
     }
   }
 }
-
-resource "azurerm_storage_blob" "static_index" {
-  count = var.enable_static_website ? 1 : 0
-
-  name                   = "index.html"
-  storage_account_name   = azurerm_storage_account.account.name
-  storage_container_name = "$web"
-
-  type           = "Block"
-  content_type   = "text/html; charset=utf-8"
-  source_content = "<html><body><h1>Hello from static web storage !!!</h1></body></html>"
-}

@@ -5,7 +5,7 @@ module "cdn_profile" {
   location              = var.location
   project               = var.project
   cdn_location          = var.cdn_location
-  enable_static_website = false
+  enable_static_website = contains(keys(local.endpoints), "web")
 }
 
 module "cdn_endpoint" {
