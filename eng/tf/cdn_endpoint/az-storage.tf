@@ -4,7 +4,7 @@ data "azurerm_storage_account" "account" {
 }
 
 data "azurerm_storage_container" "static_website" {
-  count = var.origin_type == "web" ? 1 : 0
+  count = var.origin_type == "static_website" ? 1 : 0
 
   name                 = "$web"
   storage_account_name = data.azurerm_storage_account.account.name
