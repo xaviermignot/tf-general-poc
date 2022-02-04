@@ -28,10 +28,18 @@
 #   ]
 # }
 
-module "servicebus" {
-  source = "./servicebus"
+# module "servicebus" {
+#   source = "./servicebus"
 
-  rg_name  = azurerm_resource_group.rg.name
-  location = var.location
-  project  = var.project
+#   rg_name  = azurerm_resource_group.rg.name
+#   location = var.location
+#   project  = var.project
+# }
+
+module "appgw-app-service-easy-auth" {
+  source = "./appgw-app-service-easy-auth"
+
+  rg_name              = azurerm_resource_group.rg.name
+  location             = var.location
+  project              = var.project
 }
