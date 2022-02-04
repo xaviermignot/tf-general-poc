@@ -1,6 +1,6 @@
 resource "azurerm_servicebus_namespace" "namespace" {
   name                = "sb-${var.project}"
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
   location            = var.location
   sku                 = "Standard"
 }
@@ -8,12 +8,12 @@ resource "azurerm_servicebus_namespace" "namespace" {
 resource "azurerm_servicebus_topic" "topic" {
   name                = "testTopic"
   namespace_name      = azurerm_servicebus_namespace.namespace.name
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
 }
 
 resource "azurerm_servicebus_subscription" "subscription" {
   name                = "testSubscription"
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
   namespace_name      = azurerm_servicebus_namespace.namespace.name
   topic_name          = azurerm_servicebus_topic.topic.name
   max_delivery_count  = 2
@@ -24,7 +24,7 @@ resource "azurerm_servicebus_subscription_rule" "correlationRule" {
   subscription_name   = azurerm_servicebus_subscription.subscription.name
   namespace_name      = azurerm_servicebus_namespace.namespace.name
   topic_name          = azurerm_servicebus_topic.topic.name
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
 
   filter_type = "CorrelationFilter"
 
@@ -40,7 +40,7 @@ resource "azurerm_servicebus_subscription_rule" "sqlRule" {
   subscription_name   = azurerm_servicebus_subscription.subscription.name
   namespace_name      = azurerm_servicebus_namespace.namespace.name
   topic_name          = azurerm_servicebus_topic.topic.name
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
 
   filter_type = "SqlFilter"
 
