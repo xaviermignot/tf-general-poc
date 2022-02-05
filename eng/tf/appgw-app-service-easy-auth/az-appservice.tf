@@ -1,7 +1,7 @@
 resource "azurerm_app_service_plan" "plan" {
   name                = "plan-${var.project}"
   location            = var.location
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
 
   kind     = "Linux"
   reserved = true
@@ -17,7 +17,7 @@ resource "azurerm_app_service" "app" {
 
   name                = each.value.name
   location            = var.location
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
   app_service_plan_id = azurerm_app_service_plan.plan.id
 
   site_config {
@@ -51,7 +51,7 @@ resource "azurerm_app_service_custom_hostname_binding" "app" {
 
   hostname            = "${each.value.custom_subdomain}.${var.dns_zone_name}"
   app_service_name    = each.value.name
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
 
   depends_on = [azurerm_dns_txt_record.app]
 
@@ -115,12 +115,12 @@ resource "azurerm_app_service_virtual_network_swift_connection" "app" {
 # Private DNS zone for private endpoint
 resource "azurerm_private_dns_zone" "app" {
   name                = "privatelink.azurewebsites.net"
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "app" {
   name                = azurerm_virtual_network.vnet.name
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
 
   virtual_network_id    = azurerm_virtual_network.vnet.id
   private_dns_zone_name = azurerm_private_dns_zone.app.name
@@ -131,7 +131,7 @@ resource "azurerm_private_endpoint" "app" {
   for_each = local.app_services
 
   name                = each.value.name
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
   location            = var.location
   subnet_id           = azurerm_subnet.endpoints.id
 

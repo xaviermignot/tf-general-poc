@@ -39,7 +39,15 @@
 module "appgw-app-service-easy-auth" {
   source = "./appgw-app-service-easy-auth"
 
-  rg_name              = azurerm_resource_group.rg.name
-  location             = var.location
-  project              = var.project
+  rg_name                   = azurerm_resource_group.rg.name
+  location                  = var.location
+  project                   = var.project
+  app_service_custom_domain = var.app_service_custom_domain
+  dns_zone_name             = var.dns_zone_name
+  dns_zone_rg_name          = var.dns_zone_rg_name
+  certificate_name          = var.certificate_name
+  certificate_kv_name       = var.certificate_kv_name
+  certificate_rg_name       = var.certificate_rg_name
+  custom_domain_name        = var.custom_domain_name
+  organization_name         = var.organization_name
 }

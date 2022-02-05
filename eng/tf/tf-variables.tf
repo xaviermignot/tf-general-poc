@@ -33,3 +33,18 @@ variable "certificate_rg_name" {
 variable "cdn_location" {
   type = string
 }
+
+variable "app_service_custom_domain" {
+  type        = string
+  description = "the custom domain for app service"
+}
+
+variable "custom_domain_name" {
+  type        = string
+  description = "the custom domain name for app gateway"
+}
+
+variable "organization_name" {
+  type        = string
+  description = "the name of the organization for the ssl cert"
+}

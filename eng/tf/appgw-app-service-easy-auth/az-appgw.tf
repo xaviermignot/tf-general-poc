@@ -23,7 +23,7 @@ data "azurerm_key_vault_certificate" "cert" {
 resource "azurerm_user_assigned_identity" "app_gw" {
   name                = "msi-appgw-${var.project}"
   location            = var.location
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
 }
 
 resource "azurerm_role_assignment" "app_gw_kv" {
@@ -34,7 +34,7 @@ resource "azurerm_role_assignment" "app_gw_kv" {
 
 resource "azurerm_application_gateway" "app_gw" {
   name                = "appgw-${var.project}"
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.rg_name
   location            = var.location
 
   sku {
