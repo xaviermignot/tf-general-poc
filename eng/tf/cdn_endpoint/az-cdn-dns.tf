@@ -3,7 +3,7 @@ resource "azurerm_dns_cname_record" "app" {
   zone_name           = var.dns_zone_name
   resource_group_name = var.dns_zone_rg_name
   ttl                 = 3600
-  target_resource_id  = azurerm_cdn_endpoint.app.id
+  record              = azurerm_cdn_endpoint.app.host_name
 }
 
 resource "azurerm_cdn_endpoint_custom_domain" "app" {
