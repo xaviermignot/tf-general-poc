@@ -8,14 +8,18 @@ variable "project" {
   description = "the project name to use in all resource names"
 }
 
-variable "dns_zone_name" {
-  type        = string
-  description = "the name of the DNS zone already created in Azure"
+variable "cdn_config" {
+  type = object({
+    location              = string
+    enable_static_website = bool
+  })
 }
 
-variable "dns_zone_rg_name" {
-  type        = string
-  description = "the name of the resource group containing the DNS zone"
+variable "dns_config" {
+  type = object({
+    zone_name    = string
+    zone_rg_name = string
+  })
 }
 
 variable "certificate_name" {
@@ -27,10 +31,6 @@ variable "certificate_kv_name" {
 }
 
 variable "certificate_rg_name" {
-  type = string
-}
-
-variable "cdn_location" {
   type = string
 }
 
