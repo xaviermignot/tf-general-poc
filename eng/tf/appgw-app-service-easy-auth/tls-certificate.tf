@@ -9,7 +9,7 @@ resource "tls_self_signed_cert" "self_signed_cert" {
   validity_period_hours = 48
 
   subject {
-    common_name  = var.custom_domain_name
+    common_name  = var.dns_zone_name
     organization = var.organization_name
   }
 

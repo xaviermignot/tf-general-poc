@@ -1,4 +1,6 @@
 resource "azuread_application" "easy_auth" {
+  for_each = { for key, val in local.app_services : key => val if val.easy_auth }
+
   display_name = "app-${var.project}"
 
   api {
@@ -7,8 +9,8 @@ resource "azuread_application" "easy_auth" {
 
   web {
     redirect_uris = [
-      "https://web-${var.project}-auth.azurewebsites.net/.auth/login/aad/callback",
-    "https://${var.app_service_custom_domain}/.auth/login/aad/callback"]
+      "https://${each.value.name}.azurewebsites.net/.auth/login/aad/callback",
+    "https://${each.value.custom_subdomain}.${var.dns_zone_name}/.auth/login/aad/callback"]
 
     implicit_grant {
       access_token_issuance_enabled = true
@@ -43,7 +45,9 @@ resource "azuread_application" "easy_auth" {
 }
 
 resource "azuread_application_password" "easy_auth" {
-  application_object_id = azuread_application.easy_auth.object_id
+  for_each = azuread_application.easy_auth
+
+  application_object_id = each.value.object_id
 }
 
 data "azuread_client_config" "current" {}

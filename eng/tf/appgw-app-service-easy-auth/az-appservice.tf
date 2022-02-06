@@ -39,8 +39,8 @@ resource "azurerm_app_service" "app" {
     runtime_version               = "v2"
 
     active_directory {
-      client_id     = each.value.easy_auth ? azuread_application.easy_auth.application_id : "00000000-0000-0000-0000-000000000000"
-      client_secret = each.value.easy_auth ? azuread_application_password.easy_auth.value : null
+      client_id     = each.value.easy_auth ? azuread_application.easy_auth[each.key].application_id : "00000000-0000-0000-0000-000000000000"
+      client_secret = each.value.easy_auth ? azuread_application_password.easy_auth[each.key].value : null
     }
   }
 }
