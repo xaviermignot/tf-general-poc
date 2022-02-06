@@ -22,19 +22,11 @@ variable "dns_config" {
   })
 }
 
-variable "certificate_name" {
-  type = string
-}
-
-variable "certificate_kv_name" {
-  type = string
-}
-
-variable "certificate_rg_name" {
-  type = string
-}
-
-variable "organization_name" {
-  type        = string
-  description = "the name of the organization for the ssl cert"
+variable "certificate_config" {
+  type = object({
+    name              = string
+    kv_name           = string
+    kv_rg_name        = string
+    organization_name = string
+  })
 }

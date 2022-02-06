@@ -44,8 +44,8 @@ module "appgw-app-service-easy-auth" {
   project                   = var.project
   dns_zone_name             = var.dns_config.zone_name
   dns_zone_rg_name          = var.dns_config.zone_rg_name
-  certificate_name          = var.certificate_name
-  certificate_kv_name       = var.certificate_kv_name
-  certificate_rg_name       = var.certificate_rg_name
-  organization_name         = var.organization_name
+  certificate_name          = var.certificate_config.name
+  certificate_kv_name       = var.certificate_config.kv_name
+  certificate_rg_name       = var.certificate_config.kv_rg_name
+  organization_name         = var.certificate_config.organization_name
 }
