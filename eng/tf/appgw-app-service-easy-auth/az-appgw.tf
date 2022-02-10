@@ -89,11 +89,12 @@ resource "azurerm_application_gateway" "app_gw" {
     port                                = 443
     request_timeout                     = 30
     pick_host_name_from_backend_address = true
+    probe_name                          = "${local.aps_probe_name}-scm"
   }
 
   # Blocks for App Service with easy auth: probe with hostname and http settings using these probes
   dynamic "probe" {
-    for_each = { for key, val in local.app_services : key => val if val.easy_auth }
+    for_each = { for key, val in local.app_services : key => val if val.use_custom_domain }
 
     content {
       name                = "${local.aps_probe_name}-${probe.key}"
@@ -112,7 +113,7 @@ resource "azurerm_application_gateway" "app_gw" {
 
   # HTTP settings for app services (only for apps with easy auth)
   dynamic "backend_http_settings" {
-    for_each = { for key, val in local.app_services : key => val if val.easy_auth }
+    for_each = { for key, val in local.app_services : key => val if val.use_custom_domain }
 
     content {
       name                  = "${local.aps_http_settings_name}-${backend_http_settings.key}"
@@ -195,7 +196,9 @@ resource "azurerm_application_gateway" "app_gw" {
       rule_type                  = "Basic"
       http_listener_name         = "appgw-https-aps-listener-${request_routing_rule.key}"
       backend_address_pool_name  = "appgw-backend-address-pool-aps-${request_routing_rule.key}"
-      backend_http_settings_name = request_routing_rule.value.easy_auth ? "${local.aps_http_settings_name}-${request_routing_rule.key}" : "${local.aps_http_settings_name}-default"
+      # backend_http_settings_name = "${local.aps_http_settings_name}-default"
+      backend_http_settings_name = request_routing_rule.value.use_custom_domain ? "${local.aps_http_settings_name}-${request_routing_rule.key}" : "${local.aps_http_settings_name}-default"
+      rewrite_rule_set_name      = "rewrite-${request_routing_rule.key}"
     }
   }
 
@@ -260,7 +263,32 @@ resource "azurerm_application_gateway" "app_gw" {
     }
   }
 
+  dynamic "rewrite_rule_set" {
+    for_each = local.app_services
+    iterator = app
+
+    content {
+      name = "rewrite-${app.key}"
+
+      rewrite_rule {
+        name          = "querystring"
+        rule_sequence = 100
+
+        condition {
+          variable    = "http_resp_Location"
+          pattern     = "(.*)=(https%3A%2F%2F${app.value["name"]}\\.azurewebsites\\.net)(.*)$"
+          ignore_case = true
+        }
+
+        response_header_configuration {
+          header_name  = "Location"
+          header_value = "{http_resp_Location_1}=https%3A%2F%2F${app.value["custom_subdomain"]}.${var.dns_zone_name}{http_resp_Location_3}"
+        }
+      }
+    }
+  }
+
   # This depends_on forces the creation of backend pools AFTER private endpoints, eliminating
   # 403 errors between the gateway and the backends
-  depends_on = [azurerm_private_endpoint.app]
+  # depends_on = [azurerm_private_endpoint.app]
 }

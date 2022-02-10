@@ -46,16 +46,25 @@ locals {
       name             = "web-${var.project}-auth"
       easy_auth        = true
       custom_subdomain = "appgw-app-auth"
+      use_custom_domain = false
     }
     "no-auth" = {
       name             = "web-${var.project}-no-auth"
       easy_auth        = false
       custom_subdomain = "appgw-app-no-auth"
+      use_custom_domain = false
     }
     "new" = {
       name             = "web-${var.project}-new"
       easy_auth        = false
       custom_subdomain = "appgw-app-new"
+      use_custom_domain = false
+    }
+    "auth-custom" = {
+      name             = "web-${var.project}-auth-custom"
+      easy_auth        = true
+      custom_subdomain = "appgw-app-auth-custom"
+      use_custom_domain = true
     }
   }
 }

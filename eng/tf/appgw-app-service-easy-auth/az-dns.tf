@@ -37,7 +37,7 @@ resource "azurerm_dns_a_record" "app_gw_scm" {
 
 # TXT records for verifying domain ownership
 resource "azurerm_dns_txt_record" "app" {
-  for_each = local.app_services
+  for_each = { for k, v in local.app_services : k => v if v.use_custom_domain }
 
   name                = "asuid.${each.value.custom_subdomain}"
   zone_name           = data.azurerm_dns_zone.dns.name
