@@ -21,12 +21,12 @@ resource "azurerm_app_service" "app" {
   app_service_plan_id = azurerm_app_service_plan.plan.id
 
   site_config {
-    # linux_fx_version = "DOCKER|xaviermignot/tfgeneralpoc.slim:latest"
-    dotnet_framework_version = "v6.0"
+    linux_fx_version = "DOCKER|xaviermignot/tfgeneralpoc:host"
+    # dotnet_framework_version = "v6.0"
   }
 
   app_settings = {
-    # "DOCKER_REGISTRY_SERVER_URL"          = "https://index.docker.io/v1"
+    "DOCKER_REGISTRY_SERVER_URL"                      = "https://index.docker.io/v1"
     "APPINSIGHTS_INSTRUMENTATIONKEY"                  = azurerm_application_insights.ai.instrumentation_key
     "APPINSIGHTS_PROFILERFEATURE_VERSION"             = "1.0.0"
     "APPINSIGHTS_SNAPSHOTFEATURE_VERSION"             = "1.0.0"
@@ -39,7 +39,7 @@ resource "azurerm_app_service" "app" {
     "XDT_MicrosoftApplicationInsights_BaseExtensions" = "disabled"
     "XDT_MicrosoftApplicationInsights_Mode"           = "recommended"
     "XDT_MicrosoftApplicationInsights_PreemptSdk"     = "disabled"
-    # "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = false
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE"             = false
   }
 
   auth_settings {
@@ -75,9 +75,17 @@ resource "azurerm_app_service_custom_hostname_binding" "app" {
   provisioner "local-exec" {
     command = <<EOT
       az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
+      az network dns record-set a delete -g ${var.dns_zone_rg_name} -z ${var.dns_zone_name} -n ${each.value.custom_subdomain} -y
       az network dns record-set cname set-record -g ${var.dns_zone_rg_name} -z ${var.dns_zone_name} -n ${each.value.custom_subdomain} -c ${each.value.name}.azurewebsites.net
     EOT
   }
+}
+
+# Tempo after CNAME record creation
+resource "time_sleep" "cname_create" {
+  create_duration = "10s"
+
+  depends_on = [azurerm_app_service_custom_hostname_binding.app]
 }
 
 # Managed certificates & bindings
@@ -85,7 +93,28 @@ resource "azurerm_app_service_managed_certificate" "app" {
   for_each = { for k, v in local.app_services : k => v if v.use_custom_domain }
 
   custom_hostname_binding_id = azurerm_app_service_custom_hostname_binding.app[each.key].id
+
+  depends_on = [time_sleep.cname_create]
 }
+
+# # Self-signed app service certificates
+# resource "azurerm_app_service_certificate" "self_signed" {
+#   for_each = pkcs12_from_pem.app_self_signed_cert
+
+#   name                = "self-signed-cert-${each.key}"
+#   resource_group_name = var.rg_name
+#   location            = var.location
+#   pfx_blob            = each.value.result
+#   password            = each.value.password
+# }
+
+# resource "azurerm_app_service_certificate_binding" "self_signed" {
+#   for_each = azurerm_app_service_custom_hostname_binding.app
+
+#   hostname_binding_id = each.value.id
+#   certificate_id      = azurerm_app_service_certificate.self_signed[each.key].id
+#   ssl_state           = "SniEnabled"
+# }
 
 resource "azurerm_app_service_certificate_binding" "app" {
   for_each = azurerm_app_service_custom_hostname_binding.app
@@ -110,7 +139,7 @@ resource "null_resource" "cname_remove" {
 }
 
 # Tempo after CNAME record deletion
-resource "time_sleep" "cname_create" {
+resource "time_sleep" "cname_remove" {
   create_duration = "10s"
 
   depends_on = [null_resource.cname_remove]

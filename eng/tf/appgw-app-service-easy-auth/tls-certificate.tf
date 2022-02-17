@@ -13,7 +13,7 @@ resource "tls_self_signed_cert" "self_signed_cert" {
     organization = var.organization_name
   }
 
-  allowed_uses = ["key_encipherment", "digital_signature"]
+  allowed_uses = ["key_encipherment", "digital_signature", "server_auth"]
 }
 
 resource "random_password" "self_signed_cert" {
@@ -26,3 +26,27 @@ resource "pkcs12_from_pem" "self_signed_cert" {
   private_key_pem = tls_private_key.private_key.private_key_pem
   password        = random_password.self_signed_cert.result
 }
+
+# resource "tls_self_signed_cert" "app_self_signed_cert" {
+#   for_each = local.app_services
+
+#   key_algorithm   = tls_private_key.private_key.algorithm
+#   private_key_pem = tls_private_key.private_key.private_key_pem
+
+#   validity_period_hours = 48
+
+#   subject {
+#     common_name  = "${each.value.custom_subdomain}.${var.dns_zone_name}"
+#     organization = var.organization_name
+#   }
+
+#   allowed_uses = ["key_encipherment", "digital_signature", "server_auth"]
+# }
+
+# resource "pkcs12_from_pem" "app_self_signed_cert" {
+#   for_each = tls_self_signed_cert.app_self_signed_cert
+
+#   cert_pem        = each.value.cert_pem
+#   private_key_pem = tls_private_key.private_key.private_key_pem
+#   password        = random_password.self_signed_cert.result
+# }
