@@ -97,25 +97,6 @@ resource "azurerm_app_service_managed_certificate" "app" {
   depends_on = [time_sleep.cname_create]
 }
 
-# # Self-signed app service certificates
-# resource "azurerm_app_service_certificate" "self_signed" {
-#   for_each = pkcs12_from_pem.app_self_signed_cert
-
-#   name                = "self-signed-cert-${each.key}"
-#   resource_group_name = var.rg_name
-#   location            = var.location
-#   pfx_blob            = each.value.result
-#   password            = each.value.password
-# }
-
-# resource "azurerm_app_service_certificate_binding" "self_signed" {
-#   for_each = azurerm_app_service_custom_hostname_binding.app
-
-#   hostname_binding_id = each.value.id
-#   certificate_id      = azurerm_app_service_certificate.self_signed[each.key].id
-#   ssl_state           = "SniEnabled"
-# }
-
 resource "azurerm_app_service_certificate_binding" "app" {
   for_each = azurerm_app_service_custom_hostname_binding.app
 
@@ -153,39 +134,39 @@ resource "azurerm_app_service_virtual_network_swift_connection" "app" {
   subnet_id      = azurerm_subnet.app.id
 }
 
-# # Private DNS zone for private endpoint
-# resource "azurerm_private_dns_zone" "app" {
-#   name                = "privatelink.azurewebsites.net"
-#   resource_group_name = var.rg_name
-# }
+# Private DNS zone for private endpoint
+resource "azurerm_private_dns_zone" "app" {
+  name                = "privatelink.azurewebsites.net"
+  resource_group_name = var.rg_name
+}
 
-# resource "azurerm_private_dns_zone_virtual_network_link" "app" {
-#   name                = azurerm_virtual_network.vnet.name
-#   resource_group_name = var.rg_name
+resource "azurerm_private_dns_zone_virtual_network_link" "app" {
+  name                = azurerm_virtual_network.vnet.name
+  resource_group_name = var.rg_name
 
-#   virtual_network_id    = azurerm_virtual_network.vnet.id
-#   private_dns_zone_name = azurerm_private_dns_zone.app.name
-# }
+  virtual_network_id    = azurerm_virtual_network.vnet.id
+  private_dns_zone_name = azurerm_private_dns_zone.app.name
+}
 
-# # Private endpoints
-# resource "azurerm_private_endpoint" "app" {
-#   for_each = local.app_services
+# Private endpoints
+resource "azurerm_private_endpoint" "app" {
+  for_each = local.app_services
 
-#   name                = each.value.name
-#   resource_group_name = var.rg_name
-#   location            = var.location
-#   subnet_id           = azurerm_subnet.endpoints.id
+  name                = each.value.name
+  resource_group_name = var.rg_name
+  location            = var.location
+  subnet_id           = azurerm_subnet.endpoints.id
 
-#   private_service_connection {
-#     name                           = each.value.name
-#     private_connection_resource_id = azurerm_app_service.app[each.key].id
-#     is_manual_connection           = false
+  private_service_connection {
+    name                           = each.value.name
+    private_connection_resource_id = azurerm_app_service.app[each.key].id
+    is_manual_connection           = false
 
-#     subresource_names = ["sites"]
-#   }
+    subresource_names = ["sites"]
+  }
 
-#   private_dns_zone_group {
-#     name                 = azurerm_private_dns_zone.app.name
-#     private_dns_zone_ids = [azurerm_private_dns_zone.app.id]
-#   }
-# }
+  private_dns_zone_group {
+    name                 = azurerm_private_dns_zone.app.name
+    private_dns_zone_ids = [azurerm_private_dns_zone.app.id]
+  }
+}
