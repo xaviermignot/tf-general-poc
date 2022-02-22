@@ -1,5 +1,5 @@
 resource "azuread_application" "easy_auth" {
-  for_each = { for key, val in local.app_services : key => val if val.easy_auth }
+  for_each = { for key, val in var.app_services : key => val if val.easy_auth }
 
   display_name = "app-${var.project}"
 

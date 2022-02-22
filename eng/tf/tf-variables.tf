@@ -28,5 +28,35 @@ variable "certificate_config" {
     kv_name           = string
     kv_rg_name        = string
     organization_name = string
+    email             = string
   })
+}
+
+locals {
+  app_services = {
+    "auth" = {
+      name              = "web-${var.project}-auth"
+      easy_auth         = true
+      custom_subdomain  = "appgw-app-auth"
+      use_custom_domain = true
+    }
+    "no-auth" = {
+      name              = "web-${var.project}-no-auth"
+      easy_auth         = false
+      custom_subdomain  = "appgw-app-no-auth"
+      use_custom_domain = true
+    }
+    "new" = {
+      name              = "web-${var.project}-new"
+      easy_auth         = false
+      custom_subdomain  = "appgw-app-new"
+      use_custom_domain = true
+    }
+    "auth-custom" = {
+      name              = "web-${var.project}-auth-custom"
+      easy_auth         = true
+      custom_subdomain  = "appgw-app-auth-custom"
+      use_custom_domain = true
+    }
+  }
 }

@@ -13,7 +13,7 @@ resource "azurerm_app_service_plan" "plan" {
 }
 
 resource "azurerm_app_service" "app" {
-  for_each = local.app_services
+  for_each = var.app_services
 
   name                = each.value.name
   location            = var.location
@@ -22,7 +22,6 @@ resource "azurerm_app_service" "app" {
 
   site_config {
     linux_fx_version = "DOCKER|xaviermignot/tfgeneralpoc:host"
-    # dotnet_framework_version = "v6.0"
   }
 
   app_settings = {
@@ -57,73 +56,33 @@ resource "azurerm_app_service" "app" {
   }
 }
 
+# Single wildcard App Service for all App Services
+resource "azurerm_app_service_certificate" "wildcard" {
+  name                = "cert-wildcard"
+  resource_group_name = var.rg_name
+  location            = var.location
+  pfx_blob            = var.wildcard_cert.pfx_value
+  password            = var.wildcard_cert.pfx_password
+}
+
 # Bind app services to custom domains
 resource "azurerm_app_service_custom_hostname_binding" "app" {
-  for_each = { for k, v in local.app_services : k => v if v.use_custom_domain }
+  for_each = { for k, v in var.app_services : k => v if v.use_custom_domain }
 
   hostname            = "${each.value.custom_subdomain}.${var.dns_zone_name}"
   app_service_name    = each.value.name
   resource_group_name = var.rg_name
 
   depends_on = [azurerm_dns_txt_record.app]
-
-  lifecycle {
-    ignore_changes = [ssl_state, thumbprint]
-  }
-
-  # Short-lived CNAME record required for managed certificate binding
-  provisioner "local-exec" {
-    command = <<EOT
-      az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
-      az network dns record-set a delete -g ${var.dns_zone_rg_name} -z ${var.dns_zone_name} -n ${each.value.custom_subdomain} -y
-      az network dns record-set cname set-record -g ${var.dns_zone_rg_name} -z ${var.dns_zone_name} -n ${each.value.custom_subdomain} -c ${each.value.name}.azurewebsites.net
-    EOT
-  }
 }
 
-# Tempo after CNAME record creation
-resource "time_sleep" "cname_create" {
-  create_duration = "10s"
-
-  depends_on = [azurerm_app_service_custom_hostname_binding.app]
-}
-
-# Managed certificates & bindings
-resource "azurerm_app_service_managed_certificate" "app" {
-  for_each = { for k, v in local.app_services : k => v if v.use_custom_domain }
-
-  custom_hostname_binding_id = azurerm_app_service_custom_hostname_binding.app[each.key].id
-
-  depends_on = [time_sleep.cname_create]
-}
-
-resource "azurerm_app_service_certificate_binding" "app" {
+# Binding between the custom domains and the wildcard certificate
+resource "azurerm_app_service_certificate_binding" "acme" {
   for_each = azurerm_app_service_custom_hostname_binding.app
 
   hostname_binding_id = each.value.id
-  certificate_id      = azurerm_app_service_managed_certificate.app[each.key].id
+  certificate_id      = azurerm_app_service_certificate.wildcard.id
   ssl_state           = "SniEnabled"
-}
-
-# Deletion of CNAME record to avoid conflicts with upcoming A record pointing to gateway public IP
-resource "null_resource" "cname_remove" {
-  for_each = { for k, v in local.app_services : k => v if v.use_custom_domain }
-
-  provisioner "local-exec" {
-    command = <<EOT
-      az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
-      az network dns record-set cname remove-record -g ${var.dns_zone_rg_name} -z ${var.dns_zone_name} -n ${each.value.custom_subdomain} -c ${each.value.name}.azurewebsites.net
-    EOT
-  }
-
-  depends_on = [azurerm_app_service_certificate_binding.app]
-}
-
-# Tempo after CNAME record deletion
-resource "time_sleep" "cname_remove" {
-  create_duration = "10s"
-
-  depends_on = [null_resource.cname_remove]
 }
 
 # VNet integration
@@ -150,7 +109,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "app" {
 
 # Private endpoints
 resource "azurerm_private_endpoint" "app" {
-  for_each = local.app_services
+  for_each = var.app_services
 
   name                = each.value.name
   resource_group_name = var.rg_name

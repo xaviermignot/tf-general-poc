@@ -1,6 +1,5 @@
 locals {
   ssl_certificate_name           = "appgw-ssl-certificate"
-  ssl_scm_certificate_name       = "appg-ssl-scm-certificate"
   frontend_ip_configuration_name = "appgw-frontend-ip-configuration"
   http_port_name                 = "appgw-frontend-port-http"
   http_settings_name             = "appgw-http-settings"
@@ -10,26 +9,10 @@ locals {
   aps_probe_name                 = "appgw-aps-probe"
 }
 
-data "azurerm_key_vault" "cert" {
-  name                = var.certificate_kv_name
-  resource_group_name = var.certificate_rg_name
-}
-
-data "azurerm_key_vault_certificate" "cert" {
-  name         = var.certificate_name
-  key_vault_id = data.azurerm_key_vault.cert.id
-}
-
 resource "azurerm_user_assigned_identity" "app_gw" {
   name                = "msi-appgw-${var.project}"
   location            = var.location
   resource_group_name = var.rg_name
-}
-
-resource "azurerm_role_assignment" "app_gw_kv" {
-  scope                = data.azurerm_key_vault.cert.id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id         = azurerm_user_assigned_identity.app_gw.principal_id
 }
 
 resource "azurerm_application_gateway" "app_gw" {
@@ -49,14 +32,9 @@ resource "azurerm_application_gateway" "app_gw" {
 
   # Common blocks: certificates, ip configuration, ...
   ssl_certificate {
-    name                = local.ssl_certificate_name
-    key_vault_secret_id = data.azurerm_key_vault_certificate.cert.secret_id
-  }
-
-  ssl_certificate {
-    name     = local.ssl_scm_certificate_name
-    data     = pkcs12_from_pem.self_signed_cert.result
-    password = random_password.self_signed_cert.result
+    name     = local.ssl_certificate_name
+    data     = var.wildcard_cert.pfx_value
+    password = var.wildcard_cert.pfx_password
   }
 
   gateway_ip_configuration {
@@ -83,7 +61,7 @@ resource "azurerm_application_gateway" "app_gw" {
 
   # Probes for app services
   dynamic "probe" {
-    for_each = local.app_services
+    for_each = var.app_services
     iterator = app
 
     content {
@@ -103,7 +81,7 @@ resource "azurerm_application_gateway" "app_gw" {
 
   # HTTP settings for app services
   dynamic "backend_http_settings" {
-    for_each = local.app_services
+    for_each = var.app_services
 
     content {
       name                  = "${local.aps_http_settings_name}-${backend_http_settings.key}"
@@ -118,13 +96,14 @@ resource "azurerm_application_gateway" "app_gw" {
 
   # HTTPS listeners for app services
   dynamic "http_listener" {
-    for_each = local.app_services
+    for_each = var.app_services
+    iterator = app
 
     content {
-      name                           = "appgw-https-aps-listener-${http_listener.key}"
+      name                           = "appgw-https-aps-listener-${app.key}"
       frontend_ip_configuration_name = local.frontend_ip_configuration_name
       frontend_port_name             = local.https_port_name
-      host_name                      = "${http_listener.value["custom_subdomain"]}.${var.dns_zone_name}"
+      host_name                      = "${app.value["custom_subdomain"]}.${var.dns_zone_name}"
       ssl_certificate_name           = local.ssl_certificate_name
       protocol                       = "Https"
     }
@@ -132,7 +111,7 @@ resource "azurerm_application_gateway" "app_gw" {
 
   # HTTP listeners for app services (redirections to HTTPS)
   dynamic "http_listener" {
-    for_each = local.app_services
+    for_each = var.app_services
 
     content {
       name                           = "appgw-http-aps-listener-${http_listener.key}"
@@ -144,7 +123,7 @@ resource "azurerm_application_gateway" "app_gw" {
   }
 
   dynamic "redirect_configuration" {
-    for_each = local.app_services
+    for_each = var.app_services
 
     content {
       name                 = "appgw-http-aps-redirect-${redirect_configuration.key}"
@@ -155,21 +134,21 @@ resource "azurerm_application_gateway" "app_gw" {
 
   # HTTPS listeners for scm
   dynamic "http_listener" {
-    for_each = local.app_services
+    for_each = var.app_services
 
     content {
       name                           = "appgw-https-aps-scm-listener-${http_listener.key}"
       frontend_ip_configuration_name = local.frontend_ip_configuration_name
       frontend_port_name             = local.https_port_name
       host_name                      = "${http_listener.value["custom_subdomain"]}.scm.${var.dns_zone_name}"
-      ssl_certificate_name           = local.ssl_scm_certificate_name
+      ssl_certificate_name           = local.ssl_certificate_name
       protocol                       = "Https"
     }
   }
 
   # Backend pools for app services
   dynamic "backend_address_pool" {
-    for_each = local.app_services
+    for_each = var.app_services
 
     content {
       name  = "appgw-backend-address-pool-aps-${backend_address_pool.key}"
@@ -179,7 +158,7 @@ resource "azurerm_application_gateway" "app_gw" {
 
   # Routing rules for HTTPS
   dynamic "request_routing_rule" {
-    for_each = local.app_services
+    for_each = var.app_services
 
     content {
       name                       = "appgw-routing-rule-https-aps-${request_routing_rule.key}"
@@ -192,7 +171,7 @@ resource "azurerm_application_gateway" "app_gw" {
 
   # Routing rules for HTTP (redirections to HTTPS)
   dynamic "request_routing_rule" {
-    for_each = local.app_services
+    for_each = var.app_services
 
     content {
       name                        = "appgw-routing-rule-http-aps-${request_routing_rule.key}"
@@ -230,7 +209,7 @@ resource "azurerm_application_gateway" "app_gw" {
 
   # Backend pools for scm
   dynamic "backend_address_pool" {
-    for_each = local.app_services
+    for_each = var.app_services
 
     content {
       name  = "appgw-backend-address-pool-aps-scm-${backend_address_pool.key}"
@@ -240,7 +219,7 @@ resource "azurerm_application_gateway" "app_gw" {
 
   # Routing rules for scm
   dynamic "request_routing_rule" {
-    for_each = local.app_services
+    for_each = var.app_services
 
     content {
       name                       = "appgw-routing-rule-https-aps-scm-${request_routing_rule.key}"

@@ -28,9 +28,20 @@ terraform {
       source  = "hashicorp/time"
       version = "0.7.2"
     }
+    acme = {
+      source  = "vancluever/acme"
+      version = "~> 2.0"
+    }
   }
 }
 
 provider "azurerm" {
   features {}
+}
+
+provider "acme" {
+  # staging
+  # server_url = "https://acme-staging-v02.api.letsencrypt.org/directory"
+  # production
+  server_url = "https://acme-v02.api.letsencrypt.org/directory"
 }

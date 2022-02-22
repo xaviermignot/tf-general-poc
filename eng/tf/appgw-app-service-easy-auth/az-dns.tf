@@ -10,23 +10,18 @@ locals {
 # DNS records for app service
 # A records to link subdomain to app gateway
 resource "azurerm_dns_a_record" "app_gw_app" {
-  for_each = local.app_services
+  for_each = var.app_services
 
   name                = each.value.custom_subdomain
   zone_name           = data.azurerm_dns_zone.dns.name
   resource_group_name = data.azurerm_dns_zone.dns.resource_group_name
   ttl                 = 300
   target_resource_id  = azurerm_public_ip.appgw.id
-
-  # Create the A records once the short-lived CNAME records have been removed
-  depends_on = [
-    null_resource.cname_remove
-  ]
 }
 
 # A records for scm
 resource "azurerm_dns_a_record" "app_gw_scm" {
-  for_each = local.app_services
+  for_each = var.app_services
 
   name                = "${each.value.custom_subdomain}.scm"
   zone_name           = data.azurerm_dns_zone.dns.name
@@ -37,7 +32,7 @@ resource "azurerm_dns_a_record" "app_gw_scm" {
 
 # TXT records for verifying domain ownership
 resource "azurerm_dns_txt_record" "app" {
-  for_each = { for k, v in local.app_services : k => v if v.use_custom_domain }
+  for_each = { for k, v in var.app_services : k => v if v.use_custom_domain }
 
   name                = "asuid.${each.value.custom_subdomain}"
   zone_name           = data.azurerm_dns_zone.dns.name
@@ -51,7 +46,7 @@ resource "azurerm_dns_txt_record" "app" {
 
 # Wait for DNS propagation
 resource "time_sleep" "dns_app" {
-  for_each = local.app_services
+  for_each = var.app_services
 
   create_duration = "10s"
 

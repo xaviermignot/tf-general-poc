@@ -36,16 +36,33 @@
 #   project  = var.project
 # }
 
+module "acme" {
+  source = "./acme"
+
+  email            = var.certificate_config.email
+  common_name      = "*.${var.dns_config.zone_name}"
+  dns_zone_name    = var.dns_config.zone_name
+  dns_zone_rg_name = var.dns_config.zone_rg_name
+}
+
 module "appgw-app-service-easy-auth" {
   source = "./appgw-app-service-easy-auth"
 
-  rg_name                   = azurerm_resource_group.rg.name
-  location                  = var.location
-  project                   = var.project
-  dns_zone_name             = var.dns_config.zone_name
-  dns_zone_rg_name          = var.dns_config.zone_rg_name
-  certificate_name          = var.certificate_config.name
-  certificate_kv_name       = var.certificate_config.kv_name
-  certificate_rg_name       = var.certificate_config.kv_rg_name
-  organization_name         = var.certificate_config.organization_name
+  rg_name  = azurerm_resource_group.rg.name
+  location = var.location
+  project  = var.project
+
+  app_services        = local.app_services
+  dns_zone_name       = var.dns_config.zone_name
+  dns_zone_rg_name    = var.dns_config.zone_rg_name
+  certificate_name    = var.certificate_config.name
+  certificate_kv_name = var.certificate_config.kv_name
+  certificate_rg_name = var.certificate_config.kv_rg_name
+  organization_name   = var.certificate_config.organization_name
+  certificate_email   = var.certificate_config.email
+
+  wildcard_cert = {
+    pfx_value    = module.acme.pfx_value
+    pfx_password = module.acme.pfx_password
+  }
 }
