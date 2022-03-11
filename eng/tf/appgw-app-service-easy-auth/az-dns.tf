@@ -3,10 +3,6 @@ data "azurerm_dns_zone" "dns" {
   resource_group_name = var.dns_zone_rg_name
 }
 
-locals {
-  app_service_subdomain = "appgw-app"
-}
-
 # DNS records for app service
 # A records to link subdomain to app gateway
 resource "azurerm_dns_a_record" "app_gw_app" {
