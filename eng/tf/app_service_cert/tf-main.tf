@@ -31,6 +31,7 @@ resource "azurerm_key_vault_access_policy" "tf" {
     "manageissuers",
     "setissuers",
     "update",
+    "purge"
   ]
 
   key_permissions = [
