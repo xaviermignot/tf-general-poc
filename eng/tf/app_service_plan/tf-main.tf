@@ -4,9 +4,9 @@ resource "azurerm_app_service_plan" "plan" {
   resource_group_name = var.rg_name
 
   sku {
-    tier     = "Basic"
-    size     = "B1"
-    capacity = 2
+    tier     = "Standard"
+    size     = "S1"
+    capacity = 1
   }
 
   kind     = "Linux"

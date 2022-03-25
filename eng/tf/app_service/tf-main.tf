@@ -1,12 +1,22 @@
 locals {
   platforms = {
     "docker" = {
-      linux_fx_version         = "DOCKER|${var.platform_version}",
+      linux_fx_version         = "DOCKER|${var.platform_app.version}",
       dotnet_framework_version = null
     },
     "dotnet" = {
-      linux_fx_version         = "DOTNETCORE|${var.platform_version}",
-      dotnet_framework_version = "v${var.platform_version}"
+      linux_fx_version         = "DOTNETCORE|${var.platform_app.version}",
+      dotnet_framework_version = "v${var.platform_app.version}"
+    }
+  }
+  platform_prefixes = {
+    "docker" = {
+      linux_fx_version         = "DOCKER",
+      dotnet_framework_version = null
+    },
+    "dotnet" = {
+      linux_fx_version         = "DOTNETCORE",
+      dotnet_framework_version = "v"
     }
   }
 }
@@ -18,8 +28,8 @@ resource "azurerm_app_service" "app" {
   app_service_plan_id = var.app_service_plan_id
 
   site_config {
-    linux_fx_version         = local.platforms[var.platform_type].linux_fx_version
-    dotnet_framework_version = local.platforms[var.platform_type].dotnet_framework_version
+    linux_fx_version         = "${local.platform_prefixes[var.platform_app.type].linux_fx_version}|${var.platform_app.version}"
+    dotnet_framework_version = local.platform_prefixes[var.platform_app.type].dotnet_framework_version != null ? "${local.platform_prefixes[var.platform_app.type].dotnet_framework_version}${var.platform_app.version}" : null
 
     always_on = true
 
@@ -27,9 +37,36 @@ resource "azurerm_app_service" "app" {
   }
 
   app_settings = {
-    "DOCKER_REGISTRY_SERVER_URL" = var.platform_type == "docker" ? "https://index.docker.io/v1" : null
+    "DOCKER_REGISTRY_SERVER_URL" = var.platform_app.type == "docker" ? "https://index.docker.io/v1" : null
   }
 }
+
+resource "azurerm_app_service_slot" "staging" {
+  name                = "staging"
+  location            = var.location
+  resource_group_name = var.rg_name
+  app_service_plan_id = var.app_service_plan_id
+  app_service_name    = azurerm_app_service.app.name
+
+  site_config {
+    linux_fx_version         = "${local.platform_prefixes[var.platform_slot.type].linux_fx_version}|${var.platform_slot.version}"
+    dotnet_framework_version = local.platform_prefixes[var.platform_slot.type].dotnet_framework_version != null ? "${local.platform_prefixes[var.platform_slot.type].dotnet_framework_version}${var.platform_slot.version}" : null
+
+    always_on = true
+
+    health_check_path = "/healthcheck"
+  }
+
+  app_settings = {
+    "DOCKER_REGISTRY_SERVER_URL" = var.platform_slot.type == "docker" ? "https://index.docker.io/v1" : null
+  }
+}
+
+# resource "azurerm_app_service_active_slot" "active_slot" {
+#   resource_group_name   = var.rg_name
+#   app_service_name      = azurerm_app_service.app.name
+#   app_service_slot_name = var.active_slot_name
+# }
 
 # TXT record for verifying domain ownership
 resource "azurerm_dns_txt_record" "app" {

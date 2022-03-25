@@ -67,7 +67,7 @@ module "acme" {
 #   }
 # }
 
-module "app_serice_cert" {
+module "app_service_cert" {
   source = "./app_service_cert"
 
   rg_name  = azurerm_resource_group.rg.name
@@ -83,7 +83,7 @@ module "app_serice_cert" {
 module "app_service_plan" {
   source = "./app_service_plan"
 
-  rg_name  = azurerm_resource_group.rg.name
+  rg_name  = azurerm_resource_group.plan.name
   location = var.location
   project  = var.project
 }
@@ -95,13 +95,24 @@ module "app_service_docker" {
   location = var.location
   project  = var.project
 
-  name                       = "docker"
-  platform_type              = "docker"
-  platform_version           = "xaviermignot/tfgeneralpoc:hello"
+  name = "docker"
+
+  platform_app = {
+    type    = "docker"
+    version = "xaviermignot/tfgeneralpoc:host"
+  }
+
+  platform_slot = {
+    type    = "docker"
+    version = "xaviermignot/tfgeneralpoc:hello"
+  }
+
+  active_slot_name = "staging"
+
   dns_zone_name              = var.dns_config.zone_name
   dns_zone_rg_name           = var.dns_config.zone_rg_name
   app_service_plan_id        = module.app_service_plan.app_service_plan_id
-  app_service_certificate_id = module.app_serice_cert.app_service_certificate_id
+  app_service_certificate_id = module.app_service_cert.app_service_certificate_id
 }
 
 module "app_service_package" {
@@ -111,11 +122,22 @@ module "app_service_package" {
   location = var.location
   project  = var.project
 
-  name                       = "package"
-  platform_type              = "dotnet"
-  platform_version           = "6.0"
+  name = "package"
+
+  platform_app = {
+    type    = "dotnet"
+    version = "5.0"
+  }
+
+  platform_slot = {
+    type    = "dotnet"
+    version = "6.0"
+  }
+
+  active_slot_name = "staging"
+
   dns_zone_name              = var.dns_config.zone_name
   dns_zone_rg_name           = var.dns_config.zone_rg_name
   app_service_plan_id        = module.app_service_plan.app_service_plan_id
-  app_service_certificate_id = module.app_serice_cert.app_service_certificate_id
+  app_service_certificate_id = module.app_service_cert.app_service_certificate_id
 }

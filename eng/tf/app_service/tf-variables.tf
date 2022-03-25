@@ -18,15 +18,23 @@ variable "name" {
   description = "The name of the Web App (that will be prefixed by the project)"
 }
 
-variable "platform_type" {
-  type        = string
-  description = "The platform to use for deployment. Can be either docker or dotnet for now"
+variable "platform_app" {
+  type = object({
+    type    = string
+    version = optional(string)
+  })
 }
 
-variable "platform_version" {
+variable "platform_slot" {
+  type = object({
+    type    = string
+    version = optional(string)
+  })
+}
+
+variable "active_slot_name" {
   type        = string
-  description = "The version of the platform to use. Can be a version number like 6.0 for dotnet or an image for docker."
-  default     = null
+  description = "The name of the active slot "
 }
 
 variable "dns_zone_name" {
