@@ -21,12 +21,15 @@ resource "azurerm_application_gateway" "app_gw" {
   location            = var.location
 
   sku {
-    tier     = "Standard_v2"
-    name     = "Standard_v2"
+    tier     = "WAF_v2"
+    name     = "WAF_v2"
     capacity = 1
   }
 
+  firewall_policy_id = azurerm_web_application_firewall_policy.waf.id
+
   identity {
+    type = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.app_gw.id]
   }
 
