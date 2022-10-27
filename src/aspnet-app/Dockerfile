@@ -16,4 +16,8 @@ RUN dotnet publish -c release -o /app --no-restore
 FROM mcr.microsoft.com/appsvc/dotnetcore:5.0_20201229.1
 WORKDIR /home/site/wwwroot
 COPY --from=build /app ./
+
+HEALTHCHECK --interval=5m --timeout=3s \
+  CMD curl -f http://localhost/ || exit 1
+
 ENTRYPOINT ["dotnet", "aspnetapp.dll"]

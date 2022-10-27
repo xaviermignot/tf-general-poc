@@ -17,4 +17,7 @@ RUN chmod +x /tmp/ssh_setup.sh \
 # Open port 2222 for SSH access
 EXPOSE 80 2222
 
+HEALTHCHECK --interval=5m --timeout=3s \
+  CMD curl -f http://localhost/ || exit 1
+
 RUN service ssh startsudo
