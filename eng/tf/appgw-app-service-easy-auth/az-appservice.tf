@@ -1,27 +1,25 @@
-resource "azurerm_app_service_plan" "plan" {
+resource "azurerm_service_plan" "plan" {
   name                = "plan-${var.project}"
   location            = var.location
   resource_group_name = var.rg_name
 
-  kind     = "Linux"
-  reserved = true
-
-  sku {
-    tier = "PremiumV2"
-    size = "P1v2"
-  }
+  os_type  = "Linux"
+  sku_name = "B1"
 }
 
-resource "azurerm_app_service" "app" {
+resource "azurerm_linux_web_app" "app" {
   for_each = var.app_services
 
   name                = each.value.name
   location            = var.location
   resource_group_name = var.rg_name
-  app_service_plan_id = azurerm_app_service_plan.plan.id
+  service_plan_id     = azurerm_service_plan.plan.id
 
   site_config {
-    linux_fx_version = "DOCKER|xaviermignot/tfgeneralpoc:host"
+    application_stack {
+      docker_image     = "xaviermignot/tfgeneralpoc"
+      docker_image_tag = "host"
+    }
   }
 
   app_settings = {
@@ -81,13 +79,15 @@ resource "azurerm_app_service_certificate_binding" "acme" {
   for_each = azurerm_app_service_custom_hostname_binding.app
 
   hostname_binding_id = each.value.id
-  certificate_id      = azurerm_app_service_certificate.wildcard.id
-  ssl_state           = "SniEnabled"
+  # app_service_name = each.value.app_service_name
+  # resource_group_name = var.rg_name
+  certificate_id = azurerm_app_service_certificate.wildcard.id
+  ssl_state      = "SniEnabled"
 }
 
 # VNet integration
 resource "azurerm_app_service_virtual_network_swift_connection" "app" {
-  for_each = azurerm_app_service.app
+  for_each = azurerm_linux_web_app.app
 
   app_service_id = each.value.id
   subnet_id      = azurerm_subnet.app.id
@@ -118,7 +118,7 @@ resource "azurerm_private_endpoint" "app" {
 
   private_service_connection {
     name                           = each.value.name
-    private_connection_resource_id = azurerm_app_service.app[each.key].id
+    private_connection_resource_id = azurerm_linux_web_app.app[each.key].id
     is_manual_connection           = false
 
     subresource_names = ["sites"]

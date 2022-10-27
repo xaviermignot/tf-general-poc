@@ -26,7 +26,7 @@ resource "azurerm_storage_account" "account" {
 #   storage_account_id = azurerm_storage_account.account.id
 
 #   virtual_network_subnet_ids = [azurerm_subnet.appgw.id]
-#   ip_rules                   = setunion(var.whitelisted_ips, local.tf_cloud_ips, azurerm_app_service.app.outbound_ip_address_list)
+#   ip_rules                   = setunion(var.whitelisted_ips, local.tf_cloud_ips, azurerm_linux_web_app.app.outbound_ip_address_list)
 #   default_action             = "Deny"
 # }
 

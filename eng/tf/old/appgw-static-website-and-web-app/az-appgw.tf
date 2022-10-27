@@ -160,7 +160,7 @@ resource "azurerm_application_gateway" "app_gw" {
 
   backend_address_pool {
     name  = "appgw-backend-address-pool-app-service"
-    fqdns = [azurerm_app_service.app.default_site_hostname]
+    fqdns = [azurerm_linux_web_app.app.default_site_hostname]
   }
 
   request_routing_rule {

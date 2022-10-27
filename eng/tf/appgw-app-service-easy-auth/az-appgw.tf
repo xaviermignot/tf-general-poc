@@ -29,7 +29,7 @@ resource "azurerm_application_gateway" "app_gw" {
   firewall_policy_id = azurerm_web_application_firewall_policy.waf.id
 
   identity {
-    type = "UserAssigned"
+    type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.app_gw.id]
   }
 
@@ -155,7 +155,7 @@ resource "azurerm_application_gateway" "app_gw" {
 
     content {
       name  = "appgw-backend-address-pool-aps-${backend_address_pool.key}"
-      fqdns = [azurerm_app_service.app[backend_address_pool.key].default_site_hostname]
+      fqdns = [azurerm_linux_web_app.app[backend_address_pool.key].default_hostname]
     }
   }
 
@@ -169,6 +169,7 @@ resource "azurerm_application_gateway" "app_gw" {
       http_listener_name         = "appgw-https-aps-listener-${request_routing_rule.key}"
       backend_address_pool_name  = "appgw-backend-address-pool-aps-${request_routing_rule.key}"
       backend_http_settings_name = "${local.aps_http_settings_name}-${request_routing_rule.key}"
+      priority                   = (index(keys(var.app_services), request_routing_rule.key) + 1) * 10 + 100
     }
   }
 
@@ -181,6 +182,7 @@ resource "azurerm_application_gateway" "app_gw" {
       rule_type                   = "Basic"
       http_listener_name          = "appgw-http-aps-listener-${request_routing_rule.key}"
       redirect_configuration_name = "appgw-http-aps-redirect-${request_routing_rule.key}"
+      priority                    = (index(keys(var.app_services), request_routing_rule.key) + 1) * 10 + 200
     }
   }
 
@@ -216,7 +218,7 @@ resource "azurerm_application_gateway" "app_gw" {
 
     content {
       name  = "appgw-backend-address-pool-aps-scm-${backend_address_pool.key}"
-      fqdns = ["${azurerm_app_service.app[backend_address_pool.key].name}.scm.azurewebsites.net"]
+      fqdns = ["${azurerm_linux_web_app.app[backend_address_pool.key].name}.scm.azurewebsites.net"]
     }
   }
 
@@ -230,6 +232,7 @@ resource "azurerm_application_gateway" "app_gw" {
       http_listener_name         = "appgw-https-aps-scm-listener-${request_routing_rule.key}"
       backend_address_pool_name  = "appgw-backend-address-pool-aps-scm-${request_routing_rule.key}"
       backend_http_settings_name = "${local.aps_http_settings_name}-scm"
+      priority                   = (index(keys(var.app_services), request_routing_rule.key) + 1) * 10 + 300
     }
   }
 

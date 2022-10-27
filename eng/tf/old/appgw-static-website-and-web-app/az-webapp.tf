@@ -1,4 +1,4 @@
-resource "azurerm_app_service_plan" "plan" {
+resource "azurerm_linux_web_app_plan" "plan" {
   resource_group_name = azurerm_resource_group.rg.name
   location            = var.location
   name                = "plan-${var.project}"
@@ -12,11 +12,11 @@ resource "azurerm_app_service_plan" "plan" {
   }
 }
 
-resource "azurerm_app_service" "app" {
+resource "azurerm_linux_web_app" "app" {
   resource_group_name = azurerm_resource_group.rg.name
   location            = var.location
   name                = "web-${var.project}"
-  app_service_plan_id = azurerm_app_service_plan.plan.id
+  app_service_plan_id = azurerm_linux_web_app_plan.plan.id
 
   site_config {
     linux_fx_version = "DOCKER|appsvc/dotnetcore:latest"

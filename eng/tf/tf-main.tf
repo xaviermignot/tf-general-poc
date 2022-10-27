@@ -45,34 +45,21 @@ module "acme" {
   dns_zone_rg_name = var.dns_config.zone_rg_name
 }
 
-# module "appgw-app-service-easy-auth" {
-#   source = "./appgw-app-service-easy-auth"
-
-#   rg_name  = azurerm_resource_group.rg.name
-#   location = var.location
-#   project  = var.project
-
-#   app_services        = local.app_services
-#   dns_zone_name       = var.dns_config.zone_name
-#   dns_zone_rg_name    = var.dns_config.zone_rg_name
-#   certificate_name    = var.certificate_config.name
-#   certificate_kv_name = var.certificate_config.kv_name
-#   certificate_rg_name = var.certificate_config.kv_rg_name
-#   organization_name   = var.certificate_config.organization_name
-#   certificate_email   = var.certificate_config.email
-
-#   wildcard_cert = {
-#     pfx_value    = module.acme.pfx_value
-#     pfx_password = module.acme.pfx_password
-#   }
-# }
-
-module "app_service_cert" {
-  source = "./app_service_cert"
+module "appgw-app-service-easy-auth" {
+  source = "./appgw-app-service-easy-auth"
 
   rg_name  = azurerm_resource_group.rg.name
   location = var.location
   project  = var.project
+
+  app_services        = local.app_services
+  dns_zone_name       = var.dns_config.zone_name
+  dns_zone_rg_name    = var.dns_config.zone_rg_name
+  certificate_name    = var.certificate_config.name
+  certificate_kv_name = var.certificate_config.kv_name
+  certificate_rg_name = var.certificate_config.kv_rg_name
+  organization_name   = var.certificate_config.organization_name
+  certificate_email   = var.certificate_config.email
 
   wildcard_cert = {
     pfx_value    = module.acme.pfx_value
@@ -80,64 +67,77 @@ module "app_service_cert" {
   }
 }
 
-module "app_service_plan" {
-  source = "./app_service_plan"
+# module "app_service_cert" {
+#   source = "./app_service_cert"
 
-  rg_name  = azurerm_resource_group.plan.name
-  location = var.location
-  project  = var.project
-}
+#   rg_name  = azurerm_resource_group.rg.name
+#   location = var.location
+#   project  = var.project
 
-module "app_service_docker" {
-  source = "./app_service"
+#   wildcard_cert = {
+#     pfx_value    = module.acme.pfx_value
+#     pfx_password = module.acme.pfx_password
+#   }
+# }
 
-  rg_name  = azurerm_resource_group.rg.name
-  location = var.location
-  project  = var.project
+# module "app_service_plan" {
+#   source = "./app_service_plan"
 
-  name = "docker"
+#   rg_name  = azurerm_resource_group.plan.name
+#   location = var.location
+#   project  = var.project
+# }
 
-  platform_app = {
-    type    = "docker"
-    version = "xaviermignot/tfgeneralpoc:host"
-  }
+# module "app_service_docker" {
+#   source = "./app_service"
 
-  platform_slot = {
-    type    = "docker"
-    version = "xaviermignot/tfgeneralpoc:hello"
-  }
+#   rg_name  = azurerm_resource_group.rg.name
+#   location = var.location
+#   project  = var.project
 
-  active_slot_name = "staging"
+#   name = "docker"
 
-  dns_zone_name              = var.dns_config.zone_name
-  dns_zone_rg_name           = var.dns_config.zone_rg_name
-  app_service_plan_id        = module.app_service_plan.app_service_plan_id
-  app_service_certificate_id = module.app_service_cert.app_service_certificate_id
-}
+#   platform_app = {
+#     type    = "docker"
+#     version = "xaviermignot/tfgeneralpoc:host"
+#   }
 
-module "app_service_package" {
-  source = "./app_service"
+#   platform_slot = {
+#     type    = "docker"
+#     version = "xaviermignot/tfgeneralpoc:hello"
+#   }
 
-  rg_name  = azurerm_resource_group.rg.name
-  location = var.location
-  project  = var.project
+#   active_slot_name = "staging"
 
-  name = "package"
+#   dns_zone_name              = var.dns_config.zone_name
+#   dns_zone_rg_name           = var.dns_config.zone_rg_name
+#   app_service_plan_id        = module.app_service_plan.app_service_plan_id
+#   app_service_certificate_id = module.app_service_cert.app_service_certificate_id
+# }
 
-  platform_app = {
-    type    = "dotnet"
-    version = "5.0"
-  }
+# module "app_service_package" {
+#   source = "./app_service"
 
-  platform_slot = {
-    type    = "dotnet"
-    version = "6.0"
-  }
+#   rg_name  = azurerm_resource_group.rg.name
+#   location = var.location
+#   project  = var.project
 
-  active_slot_name = "staging"
+#   name = "package"
 
-  dns_zone_name              = var.dns_config.zone_name
-  dns_zone_rg_name           = var.dns_config.zone_rg_name
-  app_service_plan_id        = module.app_service_plan.app_service_plan_id
-  app_service_certificate_id = module.app_service_cert.app_service_certificate_id
-}
+#   platform_app = {
+#     type    = "dotnet"
+#     version = "5.0"
+#   }
+
+#   platform_slot = {
+#     type    = "dotnet"
+#     version = "6.0"
+#   }
+
+#   active_slot_name = "staging"
+
+#   dns_zone_name              = var.dns_config.zone_name
+#   dns_zone_rg_name           = var.dns_config.zone_rg_name
+#   app_service_plan_id        = module.app_service_plan.app_service_plan_id
+#   app_service_certificate_id = module.app_service_cert.app_service_certificate_id
+# }

@@ -36,9 +36,8 @@ resource "azurerm_subnet" "endpoints" {
   name                = "subnet-endpoints"
   resource_group_name = var.rg_name
 
-  virtual_network_name                           = azurerm_virtual_network.vnet.name
-  address_prefixes                               = ["10.1.3.0/24"]
-  enforce_private_link_endpoint_network_policies = true
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.1.3.0/24"]
 }
 
 resource "azurerm_public_ip" "appgw" {

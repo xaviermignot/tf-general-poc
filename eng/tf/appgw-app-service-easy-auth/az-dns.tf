@@ -36,7 +36,7 @@ resource "azurerm_dns_txt_record" "app" {
   ttl                 = 300
 
   record {
-    value = azurerm_app_service.app[each.key].custom_domain_verification_id
+    value = azurerm_linux_web_app.app[each.key].custom_domain_verification_id
   }
 }
 
