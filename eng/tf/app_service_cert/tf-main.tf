@@ -19,49 +19,49 @@ resource "azurerm_key_vault_access_policy" "tf" {
   object_id    = data.azurerm_client_config.current.object_id
 
   certificate_permissions = [
-    "create",
-    "delete",
-    "deleteissuers",
-    "get",
-    "getissuers",
-    "import",
-    "list",
-    "listissuers",
-    "managecontacts",
-    "manageissuers",
-    "setissuers",
-    "update",
-    "purge"
+    "Create",
+    "Delete",
+    "DeleteIssuers",
+    "Get",
+    "GetIssuers",
+    "Import",
+    "List",
+    "ListIssuers",
+    "ManageContacts",
+    "ManageIssuers",
+    "SetIssuers",
+    "Update",
+    "Purge"
   ]
 
   key_permissions = [
-    "backup",
-    "create",
-    "decrypt",
-    "delete",
-    "encrypt",
-    "get",
-    "import",
-    "list",
-    "purge",
-    "recover",
-    "restore",
-    "sign",
-    "unwrapKey",
-    "update",
-    "verify",
-    "wrapKey",
+    "Backup",
+    "Create",
+    "Decrypt",
+    "Delete",
+    "Encrypt",
+    "Get",
+    "Import",
+    "List",
+    "Purge",
+    "Recover",
+    "Restore",
+    "Sign",
+    "UnwrapKey",
+    "Update",
+    "Verify",
+    "WrapKey",
   ]
 
   secret_permissions = [
-    "backup",
-    "delete",
-    "get",
-    "list",
-    "purge",
-    "recover",
-    "restore",
-    "set",
+    "Backup",
+    "Delete",
+    "Get",
+    "List",
+    "Purge",
+    "Recover",
+    "Restore",
+    "Set",
   ]
 }
 
@@ -70,8 +70,8 @@ resource "azurerm_key_vault_access_policy" "webapp" {
   tenant_id    = data.azurerm_client_config.current.tenant_id
   object_id    = data.azuread_service_principal.web_app.object_id
 
-  certificate_permissions = ["get"]
-  secret_permissions      = ["get"]
+  certificate_permissions = ["Get"]
+  secret_permissions      = ["Get"]
 }
 
 resource "azurerm_key_vault_certificate" "cert" {

@@ -21,6 +21,7 @@ variable "name" {
 variable "platform_app" {
   type = object({
     type    = string
+    tag     = optional(string)
     version = optional(string)
   })
 }
