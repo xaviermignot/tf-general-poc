@@ -8,12 +8,12 @@ variable "project" {
   description = "the project name to use in all resource names"
 }
 
-variable "cdn_config" {
-  type = object({
-    location              = string
-    enable_static_website = bool
-  })
-}
+# variable "cdn_config" {
+#   type = object({
+#     location              = string
+#     enable_static_website = bool
+#   })
+# }
 
 variable "dns_config" {
   type = object({

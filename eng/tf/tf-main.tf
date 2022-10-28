@@ -8,6 +8,10 @@
 #   enable_static_website = contains(keys(local.endpoints), "web")
 # }
 
+# locals {
+#   endpoints = merge({ for i in range(1, 6) : "app-${i}" => "blob" }, { web = "static_website" })
+# }
+
 # module "cdn_endpoint" {
 #   for_each = local.endpoints
 #   source   = "./cdn_endpoint"
@@ -55,11 +59,6 @@ module "appgw-app-service-easy-auth" {
   app_services        = local.app_services
   dns_zone_name       = var.dns_config.zone_name
   dns_zone_rg_name    = var.dns_config.zone_rg_name
-  certificate_name    = var.certificate_config.name
-  certificate_kv_name = var.certificate_config.kv_name
-  certificate_rg_name = var.certificate_config.kv_rg_name
-  organization_name   = var.certificate_config.organization_name
-  certificate_email   = var.certificate_config.email
 
   wildcard_cert = {
     pfx_value    = module.acme.pfx_value

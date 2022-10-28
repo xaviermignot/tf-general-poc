@@ -2,8 +2,6 @@ locals {
   ssl_certificate_name           = "appgw-ssl-certificate"
   frontend_ip_configuration_name = "appgw-frontend-ip-configuration"
   http_port_name                 = "appgw-frontend-port-http"
-  http_settings_name             = "appgw-http-settings"
-  http_probe_name                = "appgw-http-probe"
   https_port_name                = "appgw-frontend-port-https"
   aps_http_settings_name         = "appgw-aps-http-settings"
   aps_probe_name                 = "appgw-aps-probe"
