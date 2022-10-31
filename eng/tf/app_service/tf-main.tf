@@ -1,26 +1,3 @@
-# locals {
-#   platforms = {
-#     "docker" = {
-#       linux_fx_version         = "DOCKER|${var.platform_app.version}",
-#       dotnet_framework_version = null
-#     },
-#     "dotnet" = {
-#       linux_fx_version         = "DOTNETCORE|${var.platform_app.version}",
-#       dotnet_framework_version = "v${var.platform_app.version}"
-#     }
-#   }
-#   platform_prefixes = {
-#     "docker" = {
-#       linux_fx_version         = "DOCKER",
-#       dotnet_framework_version = null
-#     },
-#     "dotnet" = {
-#       linux_fx_version         = "DOTNETCORE",
-#       dotnet_framework_version = "v"
-#     }
-#   }
-# }
-
 resource "azurerm_linux_web_app" "app" {
   name                = "web-${var.project}-${var.name}"
   location            = var.location
@@ -29,14 +6,11 @@ resource "azurerm_linux_web_app" "app" {
 
   site_config {
     application_stack {
-      docker_image     = var.platform_app.type == "docker" ? var.platform_app.version : null
-      docker_image_tag = var.platform_app.type == "docker" ? var.platform_app.tag : null
+      docker_image     = var.blue_app.type == "docker" ? var.blue_app.version : null
+      docker_image_tag = var.blue_app.type == "docker" ? var.blue_app.tag : null
 
-      dotnet_version = var.platform_app.type == "dotnet" ? var.platform_app.version : null
+      dotnet_version = var.blue_app.type == "dotnet" ? var.blue_app.version : null
     }
-
-    # linux_fx_version         = "${local.platform_prefixes[var.platform_app.type].linux_fx_version}|${var.platform_app.version}"
-    # dotnet_framework_version = local.platform_prefixes[var.platform_app.type].dotnet_framework_version != null ? "${local.platform_prefixes[var.platform_app.type].dotnet_framework_version}${var.platform_app.version}" : null
 
     always_on = true
 
@@ -44,20 +18,20 @@ resource "azurerm_linux_web_app" "app" {
   }
 
   app_settings = {
-    "DOCKER_REGISTRY_SERVER_URL" = var.platform_app.type == "docker" ? "https://index.docker.io/v1" : null
+    "DOCKER_REGISTRY_SERVER_URL" = var.blue_app.type == "docker" ? "https://index.docker.io/v1" : null
   }
 }
 
 resource "azurerm_linux_web_app_slot" "staging" {
-  name                = "staging"
+  name           = "staging"
   app_service_id = azurerm_linux_web_app.app.id
 
   site_config {
     application_stack {
-      docker_image     = var.platform_app.type == "docker" ? var.platform_app.version : null
-      docker_image_tag = var.platform_app.type == "docker" ? var.platform_app.tag : null
+      docker_image     = var.green_app.type == "docker" ? var.green_app.version : null
+      docker_image_tag = var.green_app.type == "docker" ? var.green_app.tag : null
 
-      dotnet_version = var.platform_app.type == "dotnet" ? var.platform_app.version : null
+      dotnet_version = var.green_app.type == "dotnet" ? var.green_app.version : null
     }
 
     always_on = true
@@ -66,15 +40,15 @@ resource "azurerm_linux_web_app_slot" "staging" {
   }
 
   app_settings = {
-    "DOCKER_REGISTRY_SERVER_URL" = var.platform_slot.type == "docker" ? "https://index.docker.io/v1" : null
+    "DOCKER_REGISTRY_SERVER_URL" = var.green_app.type == "docker" ? "https://index.docker.io/v1" : null
   }
 }
 
-# resource "azurerm_app_service_active_slot" "active_slot" {
-#   resource_group_name   = var.rg_name
-#   app_service_name      = azurerm_linux_web_app.app.name
-#   app_service_slot_name = var.active_slot_name
-# }
+resource "azurerm_web_app_active_slot" "active_slot" {
+  count = var.active_app == "green" ? 1 : 0
+
+  slot_id = azurerm_linux_web_app_slot.staging.id
+}
 
 # TXT record for verifying domain ownership
 resource "azurerm_dns_txt_record" "app" {

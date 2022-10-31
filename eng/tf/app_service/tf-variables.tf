@@ -18,7 +18,7 @@ variable "name" {
   description = "The name of the Web App (that will be prefixed by the project)"
 }
 
-variable "platform_app" {
+variable "blue_app" {
   type = object({
     type    = string
     tag     = optional(string)
@@ -26,16 +26,21 @@ variable "platform_app" {
   })
 }
 
-variable "platform_slot" {
+variable "green_app" {
   type = object({
     type    = string
+    tag     = optional(string)
     version = optional(string)
   })
 }
 
-variable "active_slot_name" {
-  type        = string
-  description = "The name of the active slot "
+variable "active_app" {
+  type    = string
+  default = "blue"
+  validation {
+    condition = var.active_app == "blue" || var.active_app == "green"
+    error_message = "The active_app value must be either 'blue' or 'green'."
+  }
 }
 
 variable "dns_zone_name" {

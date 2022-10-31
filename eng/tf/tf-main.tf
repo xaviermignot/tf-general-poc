@@ -124,19 +124,19 @@ module "app_service_docker" {
 
   name = "docker"
 
-  platform_app = {
+  blue_app = {
     type    = "docker"
     version = "xaviermignot/tfgeneralpoc"
-    tag = "host"
+    tag     = "host"
   }
 
-  platform_slot = {
+  green_app = {
     type    = "docker"
     version = "xaviermignot/tfgeneralpoc"
-    tag = "hello"
+    tag     = "hello"
   }
 
-  active_slot_name = "staging"
+  active_app = "blue"
 
   dns_zone_name              = var.dns_config.zone_name
   dns_zone_rg_name           = var.dns_config.zone_rg_name
@@ -153,17 +153,17 @@ module "app_service_package" {
 
   name = "package"
 
-  platform_app = {
+  blue_app = {
     type    = "dotnet"
     version = "5.0"
   }
 
-  platform_slot = {
+  green_app = {
     type    = "dotnet"
     version = "6.0"
   }
 
-  active_slot_name = "staging"
+  active_app = "blue"
 
   dns_zone_name              = var.dns_config.zone_name
   dns_zone_rg_name           = var.dns_config.zone_rg_name
