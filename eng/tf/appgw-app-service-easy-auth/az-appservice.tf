@@ -10,10 +10,11 @@ resource "azurerm_service_plan" "plan" {
 resource "azurerm_linux_web_app" "app" {
   for_each = var.app_services
 
-  name                = each.value.name
-  location            = var.location
-  resource_group_name = var.rg_name
-  service_plan_id     = azurerm_service_plan.plan.id
+  name                          = each.value.name
+  location                      = var.location
+  resource_group_name           = var.rg_name
+  service_plan_id               = azurerm_service_plan.plan.id
+  public_network_access_enabled = false
 
   site_config {
     application_stack {
