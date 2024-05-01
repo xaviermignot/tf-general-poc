@@ -1,5 +1,5 @@
 # Terraform providers, state files, ...
 .terraform.*
 .terraform/
-# Terraform backend configuration: contains organization and workspace name
-tf-backend.tf
+# Env file with Terraform Cloud organization and workspace name
+.env
