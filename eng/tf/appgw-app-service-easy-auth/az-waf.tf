@@ -16,7 +16,14 @@ resource "azurerm_web_application_firewall_policy" "waf" {
       rule_group_override {
         rule_group_name = "REQUEST-942-APPLICATION-ATTACK-SQLI"
 
-        disabled_rules = ["942200", "942260", "942310", "942340", "942370"]
+        dynamic "rule" {
+          for_each = toset(["942200", "942260", "942310", "942340", "942370"])
+
+          content {
+            id      = rule.key
+            enabled = false
+          }
+        }
       }
     }
   }

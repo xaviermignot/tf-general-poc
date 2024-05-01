@@ -18,8 +18,7 @@ resource "azurerm_linux_web_app" "app" {
 
   site_config {
     application_stack {
-      docker_image     = "xaviermignot/tfgeneralpoc"
-      docker_image_tag = "host"
+      docker_image_name     = "xaviermignot/tfgeneralpoc:host"
     }
   }
 

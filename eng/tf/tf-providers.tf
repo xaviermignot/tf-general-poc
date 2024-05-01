@@ -10,23 +10,23 @@ terraform {
     }
     null = {
       source  = "hashicorp/null"
-      version = "3.1.0"
+      version = "~> 3.0"
     }
     tls = {
       source  = "hashicorp/tls"
-      version = "3.1.0"
+      version = "~> 3.0"
     }
     pkcs12 = {
       source  = "chilicat/pkcs12"
-      version = "0.0.7"
+      version = "~> 0.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.1.0"
+      version = "~> 3.0"
     }
     time = {
       source  = "hashicorp/time"
-      version = "0.7.2"
+      version = "~> 0.0"
     }
     acme = {
       source  = "vancluever/acme"

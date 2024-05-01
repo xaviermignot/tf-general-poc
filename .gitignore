@@ -1,5 +1,6 @@
 # Terraform providers, state files, ...
-.terraform.*
 .terraform/
 # Env file with Terraform Cloud organization and workspace name
 .env
+
+.mono/

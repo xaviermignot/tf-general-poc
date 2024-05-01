@@ -47,7 +47,7 @@ resource "azuread_application" "easy_auth" {
 resource "azuread_application_password" "easy_auth" {
   for_each = azuread_application.easy_auth
 
-  application_object_id = each.value.object_id
+  application_id = each.value.id
 }
 
 data "azuread_client_config" "current" {}
