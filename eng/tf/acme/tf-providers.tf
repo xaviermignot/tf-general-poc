@@ -4,15 +4,12 @@ terraform {
       source  = "vancluever/acme"
       version = "~> 2.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "3.1.0"
-    }
-    tls = {
-      source  = "hashicorp/tls"
-      version = "3.1.0"
-    }
   }
+}
 
-  required_version = "~> 1.5.0"
+provider "acme" {
+  # staging
+  # server_url = "https://acme-staging-v02.api.letsencrypt.org/directory"
+  # production
+  server_url = "https://acme-v02.api.letsencrypt.org/directory"
 }

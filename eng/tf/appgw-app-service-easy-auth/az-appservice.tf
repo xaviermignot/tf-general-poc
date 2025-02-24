@@ -23,7 +23,6 @@ resource "azurerm_linux_web_app" "app" {
   }
 
   app_settings = {
-    "DOCKER_REGISTRY_SERVER_URL"                      = "https://index.docker.io/v1"
     "APPINSIGHTS_INSTRUMENTATIONKEY"                  = azurerm_application_insights.ai.instrumentation_key
     "APPINSIGHTS_PROFILERFEATURE_VERSION"             = "1.0.0"
     "APPINSIGHTS_SNAPSHOTFEATURE_VERSION"             = "1.0.0"
@@ -48,7 +47,7 @@ resource "azurerm_linux_web_app" "app" {
     runtime_version               = "v2"
 
     active_directory {
-      client_id     = each.value.easy_auth ? azuread_application.easy_auth[each.key].application_id : "00000000-0000-0000-0000-000000000000"
+      client_id     = each.value.easy_auth ? azuread_application.easy_auth[each.key].client_id : "00000000-0000-0000-0000-000000000000"
       client_secret = each.value.easy_auth ? azuread_application_password.easy_auth[each.key].value : null
     }
   }
