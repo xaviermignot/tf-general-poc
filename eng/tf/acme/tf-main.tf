@@ -18,7 +18,7 @@ resource "acme_certificate" "cert" {
   certificate_p12_password = random_password.cert.result
 
   dns_challenge {
-    provider = "azure"
+    provider = "azuredns"
 
     config = {
       AZURE_RESOURCE_GROUP = var.dns_zone_rg_name
