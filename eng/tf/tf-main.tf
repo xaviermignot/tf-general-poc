@@ -74,6 +74,13 @@ locals {
       custom_subdomain  = "appgw-app-auth-custom"
       use_custom_domain = true
     }
+    "package" = {
+      name              = "web-${var.project}-package"
+      easy_auth         = false
+      custom_subdomain  = "appgw-app-package"
+      use_custom_domain = true
+      use_package       = true
+    }
   }
 }
 

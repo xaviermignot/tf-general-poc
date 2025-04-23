@@ -18,7 +18,8 @@ resource "azurerm_linux_web_app" "app" {
 
   site_config {
     application_stack {
-      docker_image_name     = "xaviermignot/tfgeneralpoc:host"
+      docker_image_name = each.value.use_package ? null : "xaviermignot/tfgeneralpoc:host"
+      dotnet_version    = each.value.use_package ? "9.0" : null
     }
   }
 

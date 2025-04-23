@@ -29,6 +29,7 @@ variable "app_services" {
     easy_auth         = bool
     custom_subdomain  = string
     use_custom_domain = bool
+    use_package       = optional(bool, false)
   }))
 }
 
