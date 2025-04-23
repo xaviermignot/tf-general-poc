@@ -62,16 +62,6 @@ resource "azurerm_dns_txt_record" "app" {
   }
 }
 
-# CNAME record
-resource "azurerm_dns_cname_record" "app" {
-  name                = azurerm_linux_web_app.app.name
-  zone_name           = var.dns_zone_name
-  resource_group_name = var.dns_zone_rg_name
-  ttl                 = 300
-
-  record = azurerm_linux_web_app.app.default_hostname
-}
-
 # Bind app services to custom domains
 resource "azurerm_app_service_custom_hostname_binding" "app" {
   hostname            = "${azurerm_linux_web_app.app.name}.${var.dns_zone_name}"
